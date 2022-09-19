@@ -1,11 +1,12 @@
 import { resolve } from 'path';
-// import { readdirSync } from 'fs';
-import { readdir, readFile } from 'fs/promises';
 import mustache from 'mustache';
-import { readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 
 const re = /(?:\.([^.]+))?$/;
+const reMethod = /\.(.+)\.html$/;
 const extensions = ['html'];
+
+export type Method = 'GET' | 'POST' | 'PUT' | 'UPDATE' | 'DELETE';
 
 export type Route = {
   path: string;
@@ -13,31 +14,37 @@ export type Route = {
   name: string;
   hidden: boolean;
   depth: number;
+  method: Method;
 };
 
-export async function getFiles(baseRoute: string, dir: string) {
-  const dirents = await readdir(dir, { withFileTypes: true });
-  const files: any[] = await Promise.all(
-    dirents.map((dirent) => {
-      const res = resolve(dir, dirent.name);
-      const depth =
-        (res.match(/\//g) || []).length - (baseRoute.match(/\//g) || []).length;
-      const extension = re.exec(dirent.name)?.[1];
-      const hidden = dirent.name?.[0] === '_';
-      return dirent.isDirectory()
-        ? getFiles(baseRoute, res)
-        : {
-            path: res,
-            route: res
-              .replace(baseRoute, '')
-              .replace('.html', '')
-              .replace('index', ''),
-            name: dirent.name,
-            hidden,
-            depth,
-          };
-    })
-  );
+export function getFiles(baseRoute: string, dir: string) {
+  const dirents = readdirSync(dir, { withFileTypes: true });
+  const files: any[] = dirents.map((dirent) => {
+    const res = resolve(dir, dirent.name);
+    const depth =
+      (res.match(/\//g) || []).length - (baseRoute.match(/\//g) || []).length;
+    const extension = re.exec(dirent.name)?.[1];
+    const hidden = dirent.name?.[0] === '_';
+    const method = reMethod.exec(dirent.name)?.[1].toUpperCase();
+    return dirent.isDirectory()
+      ? getFiles(baseRoute, res)
+      : {
+          path: res,
+          route: res
+            .replace(baseRoute, '')
+            .replace('.html', '')
+            .replace('.post', '')
+            .replace('.get', '')
+            .replace('.update', '')
+            .replace('.put', '')
+            .replace('.delete', '')
+            .replace('index', ''),
+          name: dirent.name,
+          hidden,
+          depth,
+          method,
+        };
+  });
   return Array.prototype.concat(...files);
 }
 
@@ -68,12 +75,8 @@ export function stackLayouts(routes: Route[], depth: number) {
 }
 
 const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/m;
-export async function processFile(
-  routes: Route[],
-  route: Route,
-  doLayout: boolean
-) {
-  const contents = await readFile(route.path, 'utf8');
+export function processFile(routes: Route[], route: Route, doLayout: boolean) {
+  const contents = readFileSync(route.path, 'utf8');
   const match = scriptRe.exec(contents);
   const scriptCode = match?.[1] || '';
   const script = match?.[0] || '';

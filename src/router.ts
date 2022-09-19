@@ -1,6 +1,7 @@
 import { resolve } from 'path';
 import mustache from 'mustache';
 import { readdirSync, readFileSync } from 'fs';
+import type { Request } from 'express';
 
 const re = /(?:\.([^.]+))?$/;
 const reMethod = /\.(.+)\.html$/;
@@ -75,13 +76,18 @@ export function stackLayouts(routes: Route[], depth: number) {
 }
 
 const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/m;
-export function processFile(routes: Route[], route: Route, doLayout: boolean) {
+export function processFile(
+  req: Request,
+  routes: Route[],
+  route: Route,
+  doLayout: boolean
+) {
   const contents = readFileSync(route.path, 'utf8');
   const match = scriptRe.exec(contents);
   const scriptCode = match?.[1] || '';
   const script = match?.[0] || '';
   const layout = doLayout ? stackLayouts(routes, route.depth) : '';
-  const result = eval('(function() {' + scriptCode + '}())');
+  const result = eval(`(function(request) {${scriptCode}}(${req}))`);
   const output = mustache.render(contents.replace(script, ''), result);
   if (layout != '') {
     return layout.replace('<slot />', output);

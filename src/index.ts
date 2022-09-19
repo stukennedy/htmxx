@@ -5,7 +5,6 @@ import compression from 'compression';
 import dotenv from 'dotenv';
 import { getFiles, closestErrorFile, processFile } from './router';
 import type { Method, Route } from './router';
-import { appendFile } from 'fs';
 
 dotenv.config();
 
@@ -43,18 +42,18 @@ const getAppMethod = (
 
   const baseRoute = __dirname + '/routes';
   const routes: Route[] = getFiles(baseRoute, baseRoute);
-  console.log({ routes });
+  // console.log({ routes });
   routes.map((f) => {
     if (!f.hidden) {
       getAppMethod(app, f.method, f.route, (req: Request, res: Response) => {
         let output = '';
         try {
-          output = processFile(routes, f, true);
+          output = processFile(req, routes, f, true);
         } catch (error) {
           console.error(error);
           const errorRoute = closestErrorFile(routes, f.depth);
           if (errorRoute) {
-            output = processFile(routes, errorRoute, false);
+            output = processFile(req, routes, errorRoute, false);
           } else {
             output = `<div>ERROR: ${error}</div<`;
           }

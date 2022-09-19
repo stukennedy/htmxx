@@ -28,7 +28,7 @@ const getAppMethod = (
   }
 };
 
-(() => {
+export default async (routesDir?: string) => {
   const app = express();
   const expressWs = require('express-ws')(app);
   const PORT = process.env.PORT || 3000;
@@ -37,12 +37,14 @@ const getAppMethod = (
   app.use(bodyParser.urlencoded({ extended: true }));
   app.set('view engine', 'html');
 
-  app.use(express.static(__dirname + '/assets'));
+  app.use(express.static(process.cwd() + '/assets'));
   app.use(compression());
 
-  const baseRoute = __dirname + '/routes';
+  const baseRoute = process.cwd() + (routesDir || '/routes');
   const routes: Route[] = getFiles(baseRoute, baseRoute);
-  // console.log({ routes });
+  if (!routes || !routes.length) {
+    throw new Error(`no valid routes found for path: ${baseRoute}`);
+  }
   routes.map((f) => {
     if (!f.hidden) {
       getAppMethod(app, f.method, f.route, (req: Request, res: Response) => {
@@ -65,5 +67,6 @@ const getAppMethod = (
   });
   app.listen(PORT, () => {
     console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
+    return app;
   });
-})();
+};

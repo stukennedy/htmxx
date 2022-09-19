@@ -90,15 +90,15 @@ export function processFile(
   const script = match?.[0] || '';
   const layout = doLayout ? stackLayouts(routes, route.depth) : '';
   const { params, query, body } = req;
-  const currentPath = path.substr(0, path.lastIndexOf('/'));
   const result = transformSync(
     `(function() {
-        const params = ${JSON.stringify(params)};
-        const query = ${JSON.stringify(query)};
-        const body = ${JSON.stringify(body)};
-        ${scriptCode}
+      const params = ${JSON.stringify(params)};
+      const query = ${JSON.stringify(query)};
+      const body = ${JSON.stringify(body)};
+      ${scriptCode}
     }())`
   );
+  const currentPath = path.substr(0, path.lastIndexOf('/'));
   const code =
     result?.code?.replace("require('.", `require('${currentPath}`) || '';
   const exe = eval(code);

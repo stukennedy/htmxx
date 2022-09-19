@@ -1,0 +1,13 @@
+<script>
+  let id = 'bob';
+  let likes = 5;
+</script>
+
+<button
+  id="like-{id}"
+  hx-post="/like/{id}"
+  type="button"
+  class="btn btn-link text-decoration-none"
+>
+  Like ({likes})
+</button>

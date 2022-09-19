@@ -2,6 +2,7 @@ import { resolve } from 'path';
 import mustache from 'mustache';
 import { readdirSync, readFileSync } from 'fs';
 import type { Request } from 'express';
+import { transformSync } from '@babel/core';
 
 const re = /(?:\.([^.]+))?$/;
 const reMethod = /\.(.+)\.html$/;
@@ -82,13 +83,26 @@ export function processFile(
   route: Route,
   doLayout: boolean
 ) {
-  const contents = readFileSync(route.path, 'utf8');
+  const path = route.path;
+  const contents = readFileSync(path, 'utf8');
   const match = scriptRe.exec(contents);
   const scriptCode = match?.[1] || '';
   const script = match?.[0] || '';
   const layout = doLayout ? stackLayouts(routes, route.depth) : '';
-  const result = eval(`(function(request) {${scriptCode}}(${req}))`);
-  const output = mustache.render(contents.replace(script, ''), result);
+  const { params, query, body } = req;
+  const currentPath = path.substr(0, path.lastIndexOf('/'));
+  const result = transformSync(
+    `(function() {
+        const params = ${JSON.stringify(params)};
+        const query = ${JSON.stringify(query)};
+        const body = ${JSON.stringify(body)};
+        ${scriptCode}
+    }())`
+  );
+  const code =
+    result?.code?.replace("require('.", `require('${currentPath}`) || '';
+  const exe = eval(code);
+  const output = mustache.render(contents.replace(script, ''), exe);
   if (layout != '') {
     return layout.replace('<slot />', output);
   }

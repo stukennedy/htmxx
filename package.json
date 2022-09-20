@@ -1,6 +1,6 @@
 {
   "name": "htmxx",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@babel/core": "^7.19.1",
     "body-parser": "^1.20.0",

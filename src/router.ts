@@ -27,7 +27,7 @@ export function getFiles(baseRoute: string, dir: string) {
       (res.match(/\//g) || []).length - (baseRoute.match(/\//g) || []).length;
     const extension = re.exec(dirent.name)?.[1];
     const hidden = dirent.name?.[0] === '_';
-    const method = reMethod.exec(dirent.name)?.[1].toUpperCase();
+    const method = reMethod.exec(dirent.name)?.[1].toUpperCase() || 'GET';
     return dirent.isDirectory()
       ? getFiles(baseRoute, res)
       : {
@@ -76,7 +76,7 @@ export function stackLayouts(routes: Route[], depth: number) {
     }, '');
 }
 
-const scriptRe = /<script\b[^>]*>([\s\S]*?)<\/script>/m;
+const scriptRe = /<script\s+type="module">([\s\S]*?)<\/script>/m;
 export function processFile(
   req: Request,
   routes: Route[],

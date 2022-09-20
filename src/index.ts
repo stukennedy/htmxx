@@ -50,7 +50,7 @@ export default async (routesDir?: string) => {
       getAppMethod(app, f.method, f.route, (req: Request, res: Response) => {
         let output = '';
         try {
-          output = processFile(req, routes, f, true);
+          output = processFile(req, routes, f, f.method === 'GET');
         } catch (error) {
           console.error(error);
           const errorRoute = closestErrorFile(routes, f.depth);

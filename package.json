@@ -1,6 +1,6 @@
 {
   "name": "htmxx",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "",
   "main": "lib/index.js",
   "scripts": {
@@ -15,6 +15,7 @@
   "dependencies": {
     "@babel/core": "^7.19.1",
     "body-parser": "^1.20.0",
+    "cheerio": "1.0.0-rc.12",
     "compression": "^1.7.4",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
@@ -26,6 +27,7 @@
     "@types/body-parser": "^1.19.2",
     "@types/compression": "^1.7.2",
     "@types/express": "^4.17.14",
+    "@types/express-ws": "^3.0.1",
     "@types/mustache": "^4.2.1",
     "@types/node": "^18.7.18",
     "concurrently": "^7.4.0",

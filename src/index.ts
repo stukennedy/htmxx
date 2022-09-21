@@ -1,5 +1,6 @@
 import type { Request, Response, Express } from 'express';
-var express = require('express');
+import express from 'express';
+import ExpressWS from 'express-ws';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import dotenv from 'dotenv';
@@ -28,9 +29,9 @@ const getAppMethod = (
   }
 };
 
-export default async (routesDir?: string) => {
+const htmxx = async (routesDir?: string) => {
   const app = express();
-  const expressWs = require('express-ws')(app);
+  const expressWs = ExpressWS(app);
   const PORT = process.env.PORT || 3000;
 
   app.use(bodyParser.json());
@@ -65,8 +66,11 @@ export default async (routesDir?: string) => {
       });
     }
   });
-  app.listen(PORT, () => {
-    console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
-    return app;
+  return new Promise((resolve) => {
+    app.listen(PORT, () => {
+      console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
+      resolve(app);
+    });
   });
 };
+module.exports = htmxx;

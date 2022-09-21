@@ -1,8 +1,9 @@
-<script>
+exports.script = () => {
   let id = 'bob';
   let likes = 5;
-</script>
+};
 
+exports.template = /*html*/ `
 <button
   id="like-{id}"
   hx-post="/like/{id}"
@@ -11,3 +12,4 @@
 >
   Like ({likes})
 </button>
+`;

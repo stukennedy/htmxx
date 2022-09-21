@@ -1,12 +1,11 @@
 import { resolve } from 'path';
 import mustache from 'mustache';
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync } from 'fs';
 import type { Request } from 'express';
 import { transformSync } from '@babel/core';
 import { load } from 'cheerio';
 
 const re = /(?:\.([^.]+))?$/;
-const reMethod = /\.(.+)\.html$/;
 
 export type Method = 'GET' | 'POST' | 'PUT' | 'UPDATE' | 'DELETE';
 
@@ -21,6 +20,7 @@ export type Route = {
 
 export function getFiles(baseRoute: string, dir: string) {
   const dirents = readdirSync(dir, { withFileTypes: true });
+  const reMethod = /\.(.+)\.js$/;
   const files: any[] = dirents
     .map((dirent) => {
       const res = resolve(dir, dirent.name);
@@ -32,12 +32,12 @@ export function getFiles(baseRoute: string, dir: string) {
       if (dirent.isDirectory()) {
         return getFiles(baseRoute, res);
       } else {
-        return extension === 'html'
+        return extension === 'js'
           ? {
               path: res,
               route: res
                 .replace(baseRoute, '')
-                .replace('.html', '')
+                .replace('.js', '')
                 .replace('.post', '')
                 .replace('.get', '')
                 .replace('.update', '')
@@ -58,27 +58,12 @@ export function getFiles(baseRoute: string, dir: string) {
 
 export function closestErrorFile(routes: Route[], depth: number) {
   return routes
-    .filter((route) => route.name === '_error.html' && route.depth <= depth)
+    .filter((route) => route.name === '_error.js' && route.depth <= depth)
     .sort((a, b) => b.depth - a.depth)
     .at(0);
 }
 
-const evaluateScript = (req: Request, scriptCode: string, path: string) => {
-  const { params, query, body } = req;
-  const result = transformSync(`(function() {
-      const params = ${JSON.stringify(params)};
-      const query = ${JSON.stringify(query)};
-      const body = ${JSON.stringify(body)};
-      ${scriptCode}
-    }())`);
-  const currentPath = path.substr(0, path.lastIndexOf('/'));
-  const code =
-    result?.code?.replace("require('.", `require('${currentPath}`) || '';
-  return eval(code);
-};
-
-type Partial = { id: string; html: string };
-function getPartials(content: string) {
+function extractPartials(content: string) {
   const $ = load(content);
   const partials: { id: string; html: string }[] = [];
   $('script[type="text/html"]').each(function (_, el) {
@@ -88,69 +73,49 @@ function getPartials(content: string) {
       partials.push({ id, html });
     }
   });
-  return partials;
+  $('script[type="text/html"]').replaceWith('');
+  return { html: $.html(), partials };
 }
 
-export function stackLayouts(req: Request, routes: Route[], route: Route) {
-  const partials: Record<string, string> = {};
-  const layouts = routes
-    .filter(
-      (currRoute) =>
-        currRoute.name === '_layout.html' && currRoute.depth <= route.depth
-    )
-    .sort((a, b) => a.depth - b.depth)
-    .reduce((stacked: string, layout: Route) => {
-      const content = readFileSync(layout.path, 'utf8');
-      const $ = load(content);
-      const scriptCode = $('script[type="module"]').html();
-      const layoutPartials = getPartials(content);
-      layoutPartials.forEach(({ id, html }) => (partials[id] = html));
-      const exe = scriptCode
-        ? evaluateScript(req, scriptCode, route.path)
-        : '{}';
-      $('script[type="text/html"]').replaceWith(''); // remove all partial templates
-      $('script[type="module"]').replaceWith(''); // remove all module scripts
-      const output = mustache.render(
-        $.html().replace('{{&gt;', '{{>'), // fix cheerio converting template
-        exe,
-        partials
-      );
-      if (stacked) {
-        const $stack = load(stacked);
-        $stack('slot').replaceWith(output);
-        return $stack.html();
-      } else {
-        return output;
-      }
-    }, '');
-  return { partials, layouts };
-}
-
-export function processFile(
+export async function processPath(
   req: Request,
   routes: Route[],
   route: Route,
   doLayout: boolean
 ) {
-  const path = route.path;
-  const content = readFileSync(path, 'utf8');
-  const $ = load(content);
-  const scriptCode = $('script[type="module"]').html();
-  const { layouts, partials } = stackLayouts(req, routes, route);
-  const pagePartials = getPartials(content);
-  pagePartials.forEach(({ id, html }) => (partials[id] = html));
-  $('script[type="text/html"]').replaceWith(''); // remove all partial templates
-  $('script[type="module"]').replaceWith(''); // remove all module scripts
-  const exe = scriptCode ? evaluateScript(req, scriptCode, route.path) : '{}';
-  const pageOutput = mustache.render(
-    $.html().replace('{{&gt;', '{{>'), // fix cheerio converting template
-    exe,
-    partials
+  const partials: Record<string, string> = {};
+  const files = await Promise.all(
+    routes
+      .filter(
+        (currRoute) =>
+          (doLayout &&
+            currRoute.name === '_layout.js' &&
+            currRoute.depth <= route.depth) ||
+          currRoute.path === route.path
+      )
+      .sort((a, b) => a.depth - b.depth)
+      .map(async ({ path }) => {
+        const { script = () => ({}), template = '' } = require(path);
+        const { html, partials: localPartials } = extractPartials(template);
+        localPartials.forEach(({ id, html }) => (partials[id] = html));
+        const exe =
+          script.constructor.name === 'AsyncFunction'
+            ? await script(req)
+            : script(req);
+        return mustache.render(
+          html.replace('{{&gt;', '{{>'), // fix cheerio converting template
+          exe,
+          partials
+        );
+      })
   );
-  if (doLayout && layouts !== '') {
-    const $stack = load(layouts);
-    $stack('slot').replaceWith(pageOutput);
-    return $stack.html();
-  }
-  return pageOutput;
+  return files.reduce((stacked, layout) => {
+    if (stacked) {
+      const $stack = load(stacked);
+      $stack('slot').replaceWith(layout);
+      return $stack.html();
+    } else {
+      return layout;
+    }
+  }, '');
 }

@@ -1,10 +1,13 @@
-<script type="module">
+exports.script = async () => {
   let title = 'My Title';
-  return {
-    title,
-  };
-</script>
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ title });
+    }, 2000);
+  });
+};
 
+exports.template = /*html*/ `
 <script type="text/html" id="my-template">
   <h3>My Template {{title}}</h3>
 </script>
@@ -28,3 +31,4 @@
     <slot />
   </body>
 </html>
+`;

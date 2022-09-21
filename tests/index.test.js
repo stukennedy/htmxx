@@ -18,4 +18,11 @@ describe('User Endpoints', () => {
       expect.stringContaining('<h3>My Template HOME</h3>')
     );
   });
+
+  it('GET /rougue should show Error HTML', async () => {
+    const res = await requestWithSupertest.get('/rogue');
+    expect(res.status).toEqual(200);
+    expect(res.type).toEqual(expect.stringContaining('html'));
+    expect(res.text).toEqual(expect.stringContaining('<h1>My Error</h1>'));
+  });
 });

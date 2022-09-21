@@ -4,7 +4,7 @@ import ExpressWS from 'express-ws';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import dotenv from 'dotenv';
-import { getFiles, closestErrorFile, processFile } from './router';
+import { getFiles, closestErrorFile, processPath } from './router';
 import type { Method, Route } from './router';
 
 dotenv.config();
@@ -47,22 +47,27 @@ const htmxx = async (routesDir?: string) => {
   }
   routes.map((f) => {
     if (!f.hidden) {
-      getAppMethod(app, f.method, f.route, (req: Request, res: Response) => {
-        let output = '';
-        try {
-          output = processFile(req, routes, f, f.method === 'GET');
-        } catch (error) {
-          console.error(error);
-          const errorRoute = closestErrorFile(routes, f.depth);
-          if (errorRoute) {
-            output = processFile(req, routes, errorRoute, false);
-          } else {
-            output = `<div>ERROR: ${error}</div<`;
+      getAppMethod(
+        app,
+        f.method,
+        f.route,
+        async (req: Request, res: Response) => {
+          let output = '';
+          try {
+            output = await processPath(req, routes, f, f.method === 'GET');
+          } catch (error) {
+            console.error(error);
+            const errorRoute = closestErrorFile(routes, f.depth);
+            if (errorRoute) {
+              output = await processPath(req, routes, errorRoute, false);
+            } else {
+              output = `<div>ERROR: ${error}</div<`;
+            }
+          } finally {
+            res.send(output);
           }
-        } finally {
-          res.send(output);
         }
-      });
+      );
     }
   });
   return new Promise((resolve) => {

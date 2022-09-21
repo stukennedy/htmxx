@@ -37,7 +37,6 @@ const htmxx = async (routesDir?: string) => {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.set('view engine', 'html');
-
   app.use(express.static(process.cwd() + '/assets'));
   app.use(compression());
 

@@ -77,38 +77,42 @@ const evaluateScript = (req: Request, scriptCode: string, path: string) => {
   return eval(code);
 };
 
-const fragmentRe = /(<script\s+type="text\/html".+>[\s\S]*?<\/script>)/gm;
+type Partial = { id: string; html: string };
+function getPartials(content: string) {
+  const $ = load(content);
+  const partials: { id: string; html: string }[] = [];
+  $('script[type="text/html"]').each(function (_, el) {
+    const id: string | undefined = $(this).attr('id');
+    const html: string | null = $(this).html();
+    if (id && html) {
+      partials.push({ id, html });
+    }
+  });
+  return partials;
+}
+
 export function stackLayouts(req: Request, routes: Route[], route: Route) {
-  return routes
+  const partials: Record<string, string> = {};
+  const layouts = routes
     .filter(
       (currRoute) =>
         currRoute.name === '_layout.html' && currRoute.depth <= route.depth
     )
     .sort((a, b) => a.depth - b.depth)
     .reduce((stacked: string, layout: Route) => {
-      const contents = readFileSync(layout.path, 'utf8');
-      const match = scriptRe.exec(contents);
+      const content = readFileSync(layout.path, 'utf8');
+      const match = scriptRe.exec(content);
       const scriptCode = match?.[1] || '';
-      const script = match?.[0] || '';
-      const fragments = Array.from(contents.matchAll(fragmentRe));
-      const strippedContent = fragments.reduce((acc, [key, value]) => {
-        return acc.replace(value, '');
-      }, contents.replace(script, ''));
+      const layoutPartials = getPartials(content);
+      layoutPartials.forEach(({ id, html }) => (partials[id] = html));
       const result = evaluateScript(req, scriptCode, route.path);
-      const withoutFrags = mustache.render(strippedContent, result);
-      const appendedFrags = fragments.reduce((acc, [key, value]) => {
-        return acc + '/n' + value;
-      }, withoutFrags);
-      if (stacked == '') {
-        return appendedFrags;
-      } else {
-        return stacked.replace('<slot />', appendedFrags);
-      }
+      const output = mustache.render(content, result);
+      return stacked == '' ? output : stacked.replace('<slot />', output);
     }, '');
+  return { partials, layouts };
 }
 
 const scriptRe = /<script\s+type="module">([\s\S]*?)<\/script>/m;
-const partialRe = /\{\{> (.+)\}\}/gm;
 export function processFile(
   req: Request,
   routes: Route[],
@@ -116,28 +120,19 @@ export function processFile(
   doLayout: boolean
 ) {
   const path = route.path;
-  const contents = readFileSync(path, 'utf8');
-  const match = scriptRe.exec(contents);
+  const content = readFileSync(path, 'utf8');
+  const match = scriptRe.exec(content);
   const scriptCode = match?.[1] || '';
-  const script = match?.[0] || '';
-  const layout = doLayout ? stackLayouts(req, routes, route) : '';
+  const { layouts, partials } = stackLayouts(req, routes, route);
+  const pagePartials = getPartials(content);
+  pagePartials.forEach(({ id, html }) => (partials[id] = html));
   const exe = evaluateScript(req, scriptCode, path);
-  const template = contents.replace(script, '');
-  const partialMatch = template.matchAll(partialRe);
-  const $ = load(layout.replace('<slot />', template));
-  const partials = Array.from(partialMatch).reduce(
-    (acc: Record<string, string>, [key, value]) => {
-      const partial = $(`#${value}`).html();
-      if (partial) {
-        acc[value] = partial;
-      }
-      return acc;
-    },
-    {}
-  );
-  const output = mustache.render(template, exe, partials);
-  if (layout != '') {
-    return layout.replace('<slot />', output);
-  }
-  return output;
+  const pageOutput = mustache.render(content, exe, partials);
+  const output = doLayout
+    ? layouts.replace('<slot />', pageOutput)
+    : pageOutput;
+  const $ = load(output);
+  $('script[type="text/html"]').replaceWith(''); // remove all partial templates
+  $('script[type="module"]').replaceWith(''); // remove all module scripts
+  return $.html();
 }

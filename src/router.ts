@@ -101,18 +101,31 @@ export function stackLayouts(req: Request, routes: Route[], route: Route) {
     .sort((a, b) => a.depth - b.depth)
     .reduce((stacked: string, layout: Route) => {
       const content = readFileSync(layout.path, 'utf8');
-      const match = scriptRe.exec(content);
-      const scriptCode = match?.[1] || '';
+      const $ = load(content);
+      const scriptCode = $('script[type="module"]').html();
       const layoutPartials = getPartials(content);
       layoutPartials.forEach(({ id, html }) => (partials[id] = html));
-      const result = evaluateScript(req, scriptCode, route.path);
-      const output = mustache.render(content, result);
-      return stacked == '' ? output : stacked.replace('<slot />', output);
+      const exe = scriptCode
+        ? evaluateScript(req, scriptCode, route.path)
+        : '{}';
+      $('script[type="text/html"]').replaceWith(''); // remove all partial templates
+      $('script[type="module"]').replaceWith(''); // remove all module scripts
+      const output = mustache.render(
+        $.html().replace('{{&gt;', '{{>'), // fix cheerio converting template
+        exe,
+        partials
+      );
+      if (stacked) {
+        const $stack = load(stacked);
+        $stack('slot').replaceWith(output);
+        return $stack.html();
+      } else {
+        return output;
+      }
     }, '');
   return { partials, layouts };
 }
 
-const scriptRe = /<script\s+type="module">([\s\S]*?)<\/script>/m;
 export function processFile(
   req: Request,
   routes: Route[],
@@ -121,18 +134,23 @@ export function processFile(
 ) {
   const path = route.path;
   const content = readFileSync(path, 'utf8');
-  const match = scriptRe.exec(content);
-  const scriptCode = match?.[1] || '';
+  const $ = load(content);
+  const scriptCode = $('script[type="module"]').html();
   const { layouts, partials } = stackLayouts(req, routes, route);
   const pagePartials = getPartials(content);
   pagePartials.forEach(({ id, html }) => (partials[id] = html));
-  const exe = evaluateScript(req, scriptCode, path);
-  const pageOutput = mustache.render(content, exe, partials);
-  const output = doLayout
-    ? layouts.replace('<slot />', pageOutput)
-    : pageOutput;
-  const $ = load(output);
   $('script[type="text/html"]').replaceWith(''); // remove all partial templates
   $('script[type="module"]').replaceWith(''); // remove all module scripts
-  return $.html();
+  const exe = scriptCode ? evaluateScript(req, scriptCode, route.path) : '{}';
+  const pageOutput = mustache.render(
+    $.html().replace('{{&gt;', '{{>'), // fix cheerio converting template
+    exe,
+    partials
+  );
+  if (doLayout && layouts !== '') {
+    const $stack = load(layouts);
+    $stack('slot').replaceWith(pageOutput);
+    return $stack.html();
+  }
+  return pageOutput;
 }

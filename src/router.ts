@@ -63,10 +63,27 @@ export function closestErrorFile(routes: Route[], depth: number) {
     .at(0);
 }
 
+const evaluateScript = (req: Request, scriptCode: string, path: string) => {
+  const { params, query, body } = req;
+  const result = transformSync(`(function() {
+      const params = ${JSON.stringify(params)};
+      const query = ${JSON.stringify(query)};
+      const body = ${JSON.stringify(body)};
+      ${scriptCode}
+    }())`);
+  const currentPath = path.substr(0, path.lastIndexOf('/'));
+  const code =
+    result?.code?.replace("require('.", `require('${currentPath}`) || '';
+  return eval(code);
+};
+
 const fragmentRe = /(<script\s+type="text\/html".+>[\s\S]*?<\/script>)/gm;
-export function stackLayouts(routes: Route[], depth: number) {
+export function stackLayouts(req: Request, routes: Route[], route: Route) {
   return routes
-    .filter((route) => route.name === '_layout.html' && route.depth <= depth)
+    .filter(
+      (currRoute) =>
+        currRoute.name === '_layout.html' && currRoute.depth <= route.depth
+    )
     .sort((a, b) => a.depth - b.depth)
     .reduce((stacked: string, layout: Route) => {
       const contents = readFileSync(layout.path, 'utf8');
@@ -77,7 +94,7 @@ export function stackLayouts(routes: Route[], depth: number) {
       const strippedContent = fragments.reduce((acc, [key, value]) => {
         return acc.replace(value, '');
       }, contents.replace(script, ''));
-      const result = eval('(function() {' + scriptCode + '}())');
+      const result = evaluateScript(req, scriptCode, route.path);
       const withoutFrags = mustache.render(strippedContent, result);
       const appendedFrags = fragments.reduce((acc, [key, value]) => {
         return acc + '/n' + value;
@@ -103,20 +120,8 @@ export function processFile(
   const match = scriptRe.exec(contents);
   const scriptCode = match?.[1] || '';
   const script = match?.[0] || '';
-  const layout = doLayout ? stackLayouts(routes, route.depth) : '';
-  const { params, query, body } = req;
-  const result = transformSync(
-    `(function() {
-      const params = ${JSON.stringify(params)};
-      const query = ${JSON.stringify(query)};
-      const body = ${JSON.stringify(body)};
-      ${scriptCode}
-    }())`
-  );
-  const currentPath = path.substr(0, path.lastIndexOf('/'));
-  const code =
-    result?.code?.replace("require('.", `require('${currentPath}`) || '';
-  const exe = eval(code);
+  const layout = doLayout ? stackLayouts(req, routes, route) : '';
+  const exe = evaluateScript(req, scriptCode, path);
   const template = contents.replace(script, '');
   const partialMatch = template.matchAll(partialRe);
   const $ = load(layout.replace('<slot />', template));

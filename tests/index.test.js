@@ -12,6 +12,7 @@ describe('User Endpoints', () => {
     const res = await requestWithSupertest.get('/');
     expect(res.status).toEqual(200);
     expect(res.type).toEqual(expect.stringContaining('html'));
+    expect(res.text).toEqual(expect.stringContaining('<h1>My Title</h1>'));
     expect(res.text).toEqual(expect.stringContaining('<h5>HOME</h5>'));
     expect(res.text).toEqual(
       expect.stringContaining('<h3>My Template HOME</h3>')

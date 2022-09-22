@@ -1,9 +1,10 @@
-exports.script = () => {
-  let id = 'bob';
-  let likes = 5;
-};
+<script server>
+  return {
+    id: 'bob',
+    likes: 5,
+  };
+</script>
 
-exports.template = /*html*/ `
 <button
   id="like-{id}"
   hx-post="/like/{id}"
@@ -12,4 +13,3 @@ exports.template = /*html*/ `
 >
   Like ({likes})
 </button>
-`;

@@ -1,0 +1,9 @@
+<script server>
+  const { productId } = params;
+  console.log({ productId });
+  return {
+    id: productId,
+  };
+</script>
+
+<h2>Product ID - {{id}}</h2>

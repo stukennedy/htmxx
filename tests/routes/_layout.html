@@ -1,13 +1,12 @@
-exports.script = async () => {
+<script server>
   let title = 'My Title';
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({ title });
     }, 2000);
   });
-};
+</script>
 
-exports.template = /*html*/ `
 <script type="text/html" id="my-template">
   <h3>My Template {{title}}</h3>
 </script>
@@ -31,4 +30,3 @@ exports.template = /*html*/ `
     <slot />
   </body>
 </html>
-`;

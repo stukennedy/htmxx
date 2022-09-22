@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 import mustache from 'mustache';
-import { readdirSync } from 'fs';
-import type { Request } from 'express';
+import { readdirSync, readFileSync } from 'fs';
+import type { Request, Response } from 'express';
 import { transformSync } from '@babel/core';
 import { load } from 'cheerio';
 
@@ -20,7 +20,7 @@ export type Route = {
 
 export function getFiles(baseRoute: string, dir: string) {
   const dirents = readdirSync(dir, { withFileTypes: true });
-  const reMethod = /\.(.+)\.js$/;
+  const reMethod = /\.(.+)\.html$/;
   const files: any[] = dirents
     .map((dirent) => {
       const res = resolve(dir, dirent.name);
@@ -32,12 +32,12 @@ export function getFiles(baseRoute: string, dir: string) {
       if (dirent.isDirectory()) {
         return getFiles(baseRoute, res);
       } else {
-        return extension === 'js'
+        return extension === 'html'
           ? {
               path: res,
               route: res
                 .replace(baseRoute, '')
-                .replace('.js', '')
+                .replace('.html', '')
                 .replace('.post', '')
                 .replace('.get', '')
                 .replace('.update', '')
@@ -58,7 +58,7 @@ export function getFiles(baseRoute: string, dir: string) {
 
 export function closestErrorFile(routes: Route[], depth: number) {
   return routes
-    .filter((route) => route.name === '_error.js' && route.depth <= depth)
+    .filter((route) => route.name === '_error.html' && route.depth <= depth)
     .sort((a, b) => b.depth - a.depth)
     .at(0);
 }
@@ -79,6 +79,7 @@ function extractPartials(content: string) {
 
 export async function processPath(
   req: Request,
+  res: Response,
   routes: Route[],
   route: Route,
   doLayout: boolean
@@ -89,19 +90,30 @@ export async function processPath(
       .filter(
         (currRoute) =>
           (doLayout &&
-            currRoute.name === '_layout.js' &&
+            currRoute.name === '_layout.html' &&
             currRoute.depth <= route.depth) ||
           currRoute.path === route.path
       )
       .sort((a, b) => a.depth - b.depth)
       .map(async ({ path }) => {
-        const { script = () => ({}), template = '' } = require(path);
-        const { html, partials: localPartials } = extractPartials(template);
+        const $ = load(readFileSync(path));
+        const scriptText = $('script[server]').html();
+        const functionText = `
+          return (async function(params, body, query, redirect) {
+            ${scriptText}
+          })(params, body, query, redirect)
+        `;
+        const script = new Function(
+          'params',
+          'body',
+          'query',
+          'redirect',
+          functionText
+        );
+        $('script[server]').replaceWith('');
+        const { html, partials: localPartials } = extractPartials($.html());
         localPartials.forEach(({ id, html }) => (partials[id] = html));
-        const exe =
-          script.constructor.name === 'AsyncFunction'
-            ? await script(req)
-            : script(req);
+        const exe = await script(req.params, req.body, req.query, res.redirect);
         return mustache.render(
           html.replace('{{&gt;', '{{>'), // fix cheerio converting template
           exe,
@@ -112,7 +124,9 @@ export async function processPath(
   return files.reduce((stacked, layout) => {
     if (stacked) {
       const $stack = load(stacked);
-      $stack('slot').replaceWith(layout);
+      if (layout) {
+        $stack('slot').replaceWith(layout);
+      }
       return $stack.html();
     } else {
       return layout;

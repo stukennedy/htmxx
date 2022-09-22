@@ -29,7 +29,7 @@ const getAppMethod = (
   }
 };
 
-const htmxx = async (routesDir?: string) => {
+const htmxx = async (routesDir: string) => {
   const app = express();
   const expressWs = ExpressWS(app);
   const PORT = process.env.PORT || 3000;
@@ -40,7 +40,7 @@ const htmxx = async (routesDir?: string) => {
   app.use(express.static(process.cwd() + '/assets'));
   app.use(compression());
 
-  const baseRoute = process.cwd() + (routesDir || '/routes');
+  const baseRoute = process.cwd() + routesDir;
   const routes: Route[] = getFiles(baseRoute, baseRoute);
   if (!routes || !routes.length) {
     throw new Error(`no valid routes found for path: ${baseRoute}`);

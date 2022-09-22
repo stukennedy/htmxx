@@ -4,6 +4,7 @@ import { readdirSync, readFileSync } from 'fs';
 import type { Request, Response } from 'express';
 import { transformSync } from '@babel/core';
 import { load } from 'cheerio';
+import path from 'path';
 
 const re = /(?:\.([^.]+))?$/;
 
@@ -77,6 +78,16 @@ function extractPartials(content: string) {
   return { html: $.html(), partials };
 }
 
+const convertRequires = (script: string, filePath: string) => {
+  const requireRe = /require\('(\..+)'\)/g;
+  const currentDir = path.join(filePath, '..');
+  const rootDir = filePath.substring(0, filePath.indexOf('/routes'));
+
+  return script
+    .replace(/require\('~\/(.+)'\)/g, `require('${rootDir}/$1')`)
+    .replace(requireRe, `require('${currentDir}/$1')`);
+};
+
 export async function processPath(
   req: Request,
   res: Response,
@@ -97,23 +108,30 @@ export async function processPath(
       .sort((a, b) => a.depth - b.depth)
       .map(async ({ path }) => {
         const $ = load(readFileSync(path));
-        const scriptText = $('script[server]').html();
+        const scriptText = $('script[server]').html() || '';
         const functionText = `
-          return (async function(params, body, query, redirect) {
-            ${scriptText}
-          })(params, body, query, redirect)
+          return (async function(params, body, query, require, redirect) {
+            ${convertRequires(scriptText, path)}
+          })(params, body, query, require, redirect)
         `;
         const script = new Function(
           'params',
           'body',
           'query',
+          'require',
           'redirect',
           functionText
         );
         $('script[server]').replaceWith('');
         const { html, partials: localPartials } = extractPartials($.html());
         localPartials.forEach(({ id, html }) => (partials[id] = html));
-        const exe = await script(req.params, req.body, req.query, res.redirect);
+        const exe = await script(
+          req.params,
+          req.body,
+          req.query,
+          require,
+          res.redirect
+        );
         return mustache.render(
           html.replace('{{&gt;', '{{>'), // fix cheerio converting template
           exe,

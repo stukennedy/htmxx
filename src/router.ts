@@ -83,7 +83,6 @@ function extractPartials(content: string) {
       partials.push({ id, html });
     }
   });
-  $('script[type="text/html"]').replaceWith('');
   return { html: $.html(), partials };
 }
 
@@ -153,6 +152,8 @@ export async function processPath(
   return files.reduce((stacked, layout) => {
     if (stacked) {
       const $stack = load(stacked);
+      $stack('script[type="text/html"]').replaceWith('');
+
       if (layout) {
         $stack('slot').replaceWith(layout);
       }

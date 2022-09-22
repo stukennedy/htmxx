@@ -59,7 +59,7 @@ const htmxx = async (routesDir: string) => {
         async (req: Request, res: Response) => {
           let output = '';
           try {
-            output = await processPath(req, res, routes, f, f.method === 'GET');
+            output = await processPath(req, routes, f, f.method === 'GET');
             res.send(output);
           } catch (error: unknown) {
             if (error?.hasOwnProperty('location')) {
@@ -70,7 +70,7 @@ const htmxx = async (routesDir: string) => {
             }
             const errorRoute = closestErrorFile(routes, f.depth);
             if (errorRoute) {
-              output = await processPath(req, res, routes, errorRoute, false);
+              output = await processPath(req, routes, errorRoute, false);
             } else {
               output = `<div>ERROR: ${error}</div<`;
             }

@@ -1,8 +1,7 @@
 import { resolve } from 'path';
 import mustache from 'mustache';
 import { readdirSync, readFileSync } from 'fs';
-import type { Request, Response } from 'express';
-import { transformSync } from '@babel/core';
+import type { Request } from 'express';
 import { load } from 'cheerio';
 import path from 'path';
 
@@ -27,7 +26,6 @@ class RedirectError {
     this.location = location;
   }
 }
-
 export function getFiles(baseRoute: string, dir: string) {
   const dirents = readdirSync(dir, { withFileTypes: true });
   const reMethod = /\.(.+)\.html$/;
@@ -83,6 +81,7 @@ function extractPartials(content: string) {
       partials.push({ id, html });
     }
   });
+  $('script[type="text/html"]').replaceWith('');
   return { html: $.html(), partials };
 }
 
@@ -98,7 +97,6 @@ const convertRequires = (script: string, filePath: string) => {
 
 export async function processPath(
   req: Request,
-  res: Response,
   routes: Route[],
   route: Route,
   doLayout: boolean
@@ -108,13 +106,12 @@ export async function processPath(
     routes
       .filter(
         (currRoute) =>
-          (doLayout &&
-            currRoute.name === '_layout.html' &&
+          (currRoute.name === '_layout.html' &&
             currRoute.depth <= route.depth) ||
           currRoute.path === route.path
       )
       .sort((a, b) => a.depth - b.depth)
-      .map(async ({ path }) => {
+      .map(async ({ name, path }) => {
         const $ = load(readFileSync(path));
         const scriptText = $('script[server]').html() || '';
         const functionText = `
@@ -142,18 +139,20 @@ export async function processPath(
             throw new RedirectError(status, location);
           }
         );
-        return mustache.render(
-          html.replace('{{&gt;', '{{>'), // fix cheerio converting template
-          exe,
-          partials
-        );
+        if (!doLayout && name === '_layout.html') {
+          return '<slot />';
+        } else {
+          return mustache.render(
+            html.replace('{{&gt;', '{{>'), // fix cheerio converting template
+            exe,
+            partials
+          );
+        }
       })
   );
   return files.reduce((stacked, layout) => {
     if (stacked) {
       const $stack = load(stacked);
-      $stack('script[type="text/html"]').replaceWith('');
-
       if (layout) {
         $stack('slot').replaceWith(layout);
       }

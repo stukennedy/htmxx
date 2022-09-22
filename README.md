@@ -103,6 +103,31 @@ e.g.
 </button>
 ```
 
+## Redirecting from an endpoint
+
+In some cases in your server-side code you may decide you need to redirect to a different route.
+to do this, simply call `redirect(statusCode, location)` in your script
+e.g.
+
+```html
+<script server>
+  redirect(303, '/');
+</script>
+```
+
+## Aliased require paths
+
+When requiring code in your server scripts you can either use relative paths, or the `~` operator will alias to the folder above your routes folder (e.g. your application root).
+e.g.
+
+```html
+<script server>
+  // src/routes/index.html
+  // require file at src/models/customers.js
+  const cust = require('~/models/customers');
+</script>
+```
+
 ## Using HTMX with endpoints
 
 Each script module receives access to `params`, `query` and `body` variables which can be used to respond to the client requests. This next file will respond to the `POST` request sent from our `customers.html` above when the button is pressed.

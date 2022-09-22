@@ -19,6 +19,15 @@ export type Route = {
   method: Method;
 };
 
+class RedirectError {
+  status: number;
+  location: string;
+  constructor(status: number, location: string) {
+    this.status = status;
+    this.location = location;
+  }
+}
+
 export function getFiles(baseRoute: string, dir: string) {
   const dirents = readdirSync(dir, { withFileTypes: true });
   const reMethod = /\.(.+)\.html$/;
@@ -130,7 +139,9 @@ export async function processPath(
           req.body,
           req.query,
           require,
-          res.redirect
+          (status: number, location: string) => {
+            throw new RedirectError(status, location);
+          }
         );
         return mustache.render(
           html.replace('{{&gt;', '{{>'), // fix cheerio converting template

@@ -9,6 +9,11 @@ import type { Method, Route } from './router';
 
 dotenv.config();
 
+type Redirect = {
+  location: string;
+  status: number;
+};
+
 const getAppMethod = (
   app: Express,
   method: Method,
@@ -55,15 +60,20 @@ const htmxx = async (routesDir: string) => {
           let output = '';
           try {
             output = await processPath(req, res, routes, f, f.method === 'GET');
-          } catch (error) {
-            console.error(error);
+            res.send(output);
+          } catch (error: unknown) {
+            if (error?.hasOwnProperty('location')) {
+              const redirect = error as Redirect;
+              const { location, status } = redirect;
+              res.redirect(status, location);
+              return;
+            }
             const errorRoute = closestErrorFile(routes, f.depth);
             if (errorRoute) {
               output = await processPath(req, res, routes, errorRoute, false);
             } else {
               output = `<div>ERROR: ${error}</div<`;
             }
-          } finally {
             res.send(output);
           }
         }

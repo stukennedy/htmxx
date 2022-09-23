@@ -31,7 +31,7 @@ e.g.
 
 ## Special files
 
-Any HTML files will be treated as an endpoint. `*.html` is a `GET`, other methods (`POST`, `PUT`, `UPDATE`, `DELETE`) are supported in by adding the prefix to the HTML extension e.g. `*.post.html` is a `POST`.
+Any HTML files will be treated as an endpoint. `*.html` is a `GET`, other methods (`POST`, `PUT`, `PATCH`, `DELETE`) are supported in by adding the lowercase prefix to the HTML extension e.g. `*.post.html` is a `POST`.
 Special files `_layout.html` and `_error.html` can be defined anywhere within our routes structure, these don't have endpoints but serve the following purposes:
 
 ### Layout files
@@ -174,3 +174,7 @@ And used like this
 ```
 
 Any template variables will be rendered in their used context.
+
+## TODO Example
+
+See the `example` folder for a TodoMVC implementation in HTMXX

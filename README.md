@@ -2,9 +2,11 @@
 
 ## Back to the future of web development
 
-A zero config full-stack web framework using HTMX, Mustache and a routing structure.
-Reactive and responsive web development with proper REST endpoints (i.e. returning HTML not JSON)
-And no need for any client-side Javascript.
+A zero config full-stack web framework using [HTMX](https://htmx.org), [Mustache](https://github.com/janl/mustache.js) and a routing structure.
+Reactive and responsive web development with proper [REST](https://htmx.org/essays/rest-explained/) endpoints (i.e. returning HTML not JSON)
+And no need for any client-side Javascript. Use [Hyperscript](https://hyperscript.org/) for reactivity.
+
+![todomvc htmx demo gif](todo-demo.gif)
 
 ## How to install
 
@@ -178,3 +180,11 @@ Any template variables will be rendered in their used context.
 ## TODO Example
 
 See the `example` folder for a TodoMVC implementation in HTMXX
+
+## Resources
+
+- [HTMX Website](https://htmx.org)
+- [HTMX Documentation](https://htmx.org/docs)
+- [HTMX Discord](https://htmx.org/discord)
+- [Mustache Website](https://github.com/janl/mustache.js)
+- [Hyperscript Website](https://hyperscript.org/)

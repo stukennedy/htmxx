@@ -1,0 +1,5 @@
+<script server>
+  const model = require('~/models/todos');
+  return model.renameTodo(params.id, body.name);
+</script>
+{{> todo-item-frag}}

@@ -1,0 +1,6 @@
+<script server>
+  const model = require('~/models/todos');
+  return model.getTodo(params.id);
+</script>
+
+{{> edit-item-frag}}

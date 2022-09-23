@@ -1,0 +1,108 @@
+<script server>
+  const model = require('~/models/todos');
+  const itemsLeft = model.getItemsLeft();
+  return { itemsLeft };
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Template • TodoMVC</title>
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/index.css" />
+    <script src="htmx.min.js"></script>
+  </head>
+  <body>
+    <section class="todoapp">
+      <header class="header">
+        <h1>todos</h1>
+        <form
+          hx-post="/todos"
+          hx-target="#todo-list"
+          hx-swap="afterbegin"
+          _="on htmx:afterOnLoad set #txtTodo.value to ''"
+        >
+          <input
+            class="new-todo"
+            id="txtTodo"
+            name="todo"
+            placeholder="What needs to be done?"
+            autofocus=""
+          />
+        </form>
+      </header>
+      <slot></slot>
+      <footer class="footer">
+        {{> todo-count-frag}}
+        <ul class="filters">
+          <li><a href="/?filter=all">All</a></li>
+          <li><a href="/?filter=active">Active</a></li>
+          <li><a href="/?filter=completed">Completed</a></li>
+        </ul>
+        <button
+          class="clear-completed"
+          hx-post="/todos/clear-completed"
+          hx-target="#todo-list"
+        >
+          Clear completed
+        </button>
+      </footer>
+    </section>
+    <footer class="info">
+      <p>Click to edit a todo</p>
+      <p>Template by <a href="http://sindresorhus.com">Sindre Sorhus</a></p>
+      <p>
+        Created by
+        <a href="https://github.com/stukennedy">Stu Kennedy</a>
+      </p>
+      <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+    </footer>
+  </body>
+</html>
+
+<script type="text/html" id="todo-item-frag">
+  <li class="{{completed}}" id="todo-{{id}}">
+    <div class="view">
+      <input
+        class="toggle"
+        hx-patch="/todos/{{id}}"
+        type="checkbox"
+        {{checked}}
+        hx-target="#todo-{{id}}"
+        hx-swap="outerHTML"
+      />
+      <label
+        hx-put="/todos/{{id}}"
+        hx-target="#todo-{{id}}"
+        hx-swap="outerHTML"
+      >
+        {{name}}
+      </label>
+      <button
+        class="destroy"
+        hx-delete="/todos/{{id}}"
+        _="on htmx:afterOnLoad remove #todo-{{id}}"
+      ></button>
+    </div>
+  </li>
+</script>
+
+<script type="text/html" id="todo-count-frag">
+  <span id="todo-count" class="todo-count" hx-swap-oob="true">
+    <strong>{{itemsLeft}}</strong> item left
+  </span>
+</script>
+
+<script type="text/html" id="edit-item-frag">
+  <form hx-post="/todos/update/{{id}}">
+    <input class="edit" type="text" name="name" value="{{name}}" />
+  </form>
+</script>
+
+<script type="text/html" id="todo-list-frag">
+  <ul class="todo-list" id="todo-list">
+    {{#todos}} {{> todo-item-frag}} {{/todos}}
+  </ul>
+</script>

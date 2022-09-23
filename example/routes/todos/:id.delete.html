@@ -1,0 +1,8 @@
+<script server>
+  const model = require('~/models/todos');
+  model.deleteTodo(params.id);
+  const itemsLeft = model.getItemsLeft();
+  return { itemsLeft };
+</script>
+
+{{> todo-count-frag}}

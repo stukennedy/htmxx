@@ -20,6 +20,7 @@ specifiers:
   nodemon: ^2.0.20
   supertest: ^6.2.4
   typescript: ^4.8.3
+  uuid: ^9.0.0
 
 dependencies:
   body-parser: 1.20.0
@@ -29,6 +30,7 @@ dependencies:
   express: 4.18.1
   express-ws: 5.0.2_express@4.18.1
   mustache: 4.2.0
+  uuid: 9.0.0
 
 devDependencies:
   '@types/body-parser': 1.19.2
@@ -3084,6 +3086,11 @@ packages:
   /utils-merge/1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
+    dev: false
+
+  /uuid/9.0.0:
+    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
+    hasBin: true
     dev: false
 
   /v8-to-istanbul/9.0.1:

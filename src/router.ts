@@ -7,7 +7,7 @@ import path from 'path';
 
 const re = /(?:\.([^.]+))?$/;
 
-export type Method = 'GET' | 'POST' | 'PUT' | 'UPDATE' | 'DELETE';
+export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 export type Route = {
   path: string;
@@ -48,9 +48,9 @@ export function getFiles(baseRoute: string, dir: string) {
                 .replace('.html', '')
                 .replace('.post', '')
                 .replace('.get', '')
-                .replace('.update', '')
                 .replace('.put', '')
                 .replace('.delete', '')
+                .replace('.patch', '')
                 .replace('index', ''),
               name: dirent.name,
               hidden,
@@ -140,10 +140,10 @@ export async function processPath(
           }
         );
         if (!doLayout && name === '_layout.html') {
-          return '<slot />';
+          return '<slot></slot>';
         } else {
           return mustache.render(
-            html.replace('{{&gt;', '{{>'), // fix cheerio converting template
+            html.replace(/\{\{&gt;/g, '{{>'), // fix cheerio converting template
             exe,
             partials
           );

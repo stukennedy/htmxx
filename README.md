@@ -38,7 +38,7 @@ Special files `_layout.html` and `_error.html` can be defined anywhere within ou
 
 ### Layout files
 
-These files allow nesting of content in your routes structure allowing layouts to be created at any level of the routing tree. They must contain a `<slot />` tag to tell the framework where the content is to be rendered. We add the import for HTMX in the root `_layout.html` file.
+These files allow nesting of content in your routes structure allowing layouts to be created at any level of the routing tree. They must contain a `<slot></slot>` tag to tell the framework where the content is to be rendered. We add the import for HTMX in the root `_layout.html` file.
 
 e.g.
 
@@ -54,7 +54,7 @@ e.g.
   </head>
 </head>
 <body>
-  <slot />
+  <slot></slot>
 </body>
 </html>
 ```

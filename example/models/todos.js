@@ -9,15 +9,11 @@ class Todos {
         id: uuid(),
         name: 'Taste htmx',
         done: true,
-        checked: 'checked',
-        completed: 'completed',
       },
       {
         id: uuid(),
         name: 'Buy a unicorn',
         done: false,
-        checked: '',
-        completed: '',
       },
     ];
   }
@@ -35,8 +31,6 @@ class Todos {
   toggleTodo(id) {
     const idx = this.todos.findIndex((t) => t.id === id);
     this.todos[idx].done = !this.todos[idx].done;
-    this.todos[idx].checked = this.todos[idx].done ? 'checked' : '';
-    this.todos[idx].completed = this.todos[idx].done ? 'completed' : '';
     return this.todos[idx];
   }
 

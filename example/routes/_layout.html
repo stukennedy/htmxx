@@ -1,7 +1,13 @@
 <script server>
   const model = require('~/models/todos');
+  const { filter } = query;
   const itemsLeft = model.getItemsLeft();
-  return { itemsLeft };
+  return {
+    itemsLeft,
+    allClass: filter == 'all' || !filter ? 'selected' : '',
+    activeClass: filter == 'active' ? 'selected' : '',
+    completedClass: filter == 'completed' ? 'selected' : '',
+  };
 </script>
 
 <!DOCTYPE html>
@@ -37,10 +43,17 @@
       <slot></slot>
       <footer class="footer">
         {{> todo-count-frag}}
-        <ul class="filters">
-          <li><a href="/?filter=all">All</a></li>
-          <li><a href="/?filter=active">Active</a></li>
-          <li><a href="/?filter=completed">Completed</a></li>
+        <ul
+          class="filters"
+          _="on htmx:afterOnLoad take .selected from .link for window.location"
+        >
+          <li><a href="/?filter=all" class="{{allClass}}">All</a></li>
+          <li><a href="/?filter=active" class="{{activeClass}}">Active</a></li>
+          <li>
+            <a href="/?filter=completed" class="{{completedClass}}"
+              >Completed</a
+            >
+          </li>
         </ul>
         <button
           class="clear-completed"
@@ -63,17 +76,19 @@
   </body>
 </html>
 
+<script type="text/html" id="todo-list-frag">
+  <!-- PARTIAL: THE TODO LIST -->
+  <ul class="todo-list" id="todo-list">
+    {{#todos}} {{> todo-item-frag}} {{/todos}}
+  </ul>
+</script>
+
 <script type="text/html" id="todo-item-frag">
-  <li class="{{completed}}" id="todo-{{id}}">
+  <!-- PARTIAL: A TODO ITEM -->
+  <li class="{{#done}}completed{{/done}}" id="todo-{{id}}">
     <div class="view">
-      <input
-        class="toggle"
-        hx-patch="/todos/{{id}}"
-        type="checkbox"
-        {{checked}}
-        hx-target="#todo-{{id}}"
-        hx-swap="outerHTML"
-      />
+      <input class="toggle" hx-patch="/todos/{{id}}" type="checkbox"
+      {{#done}}checked{{/done}} hx-target="#todo-{{id}}" hx-swap="outerHTML" />
       <label
         hx-put="/todos/{{id}}"
         hx-target="#todo-{{id}}"
@@ -91,19 +106,15 @@
 </script>
 
 <script type="text/html" id="todo-count-frag">
+  <!-- PARTIAL: ITEMS LEFT COUNTER -->
   <span id="todo-count" class="todo-count" hx-swap-oob="true">
     <strong>{{itemsLeft}}</strong> item left
   </span>
 </script>
 
 <script type="text/html" id="edit-item-frag">
+  <!-- PARTIAL: EDIT AN ITEM -->
   <form hx-post="/todos/update/{{id}}">
     <input class="edit" type="text" name="name" value="{{name}}" />
   </form>
-</script>
-
-<script type="text/html" id="todo-list-frag">
-  <ul class="todo-list" id="todo-list">
-    {{#todos}} {{> todo-item-frag}} {{/todos}}
-  </ul>
 </script>

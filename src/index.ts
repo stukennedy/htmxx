@@ -20,17 +20,18 @@ const getAppMethod = (
   route: string,
   callback: (req: Request, res: Response) => void
 ) => {
+  const paramRoute = route.replace(/\[(.+)\]/g, ':$1');
   switch (method) {
     case 'DELETE':
-      return app.delete(route, callback);
+      return app.delete(paramRoute, callback);
     case 'PUT':
-      return app.put(route, callback);
+      return app.put(paramRoute, callback);
     case 'POST':
-      return app.post(route, callback);
+      return app.post(paramRoute, callback);
     case 'PATCH':
-      return app.patch(route, callback);
+      return app.patch(paramRoute, callback);
     default:
-      return app.get(route, callback);
+      return app.get(paramRoute, callback);
   }
 };
 

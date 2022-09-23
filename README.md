@@ -69,8 +69,8 @@ An `_error.html` in the same directory as the error occured or in a directory ab
 ### parameterised filenames
 
 In many routing frameworks you have the ability to define variable path names e.g. `customers/:customerId` so that when a user navigates to `customers/56` the code can retrieve the `customerId` as 56 and load the correct data to display. This framework follows the same principle and it is defined by the folder and file structure.
-If we create a folder structure `customers/:customerId` we can place an `index.html` in the `customers` folder and another `index.html` in the `:customerId` folder, or we could have a file called `:customerId.html` in the `customers` folder.
-The `<script server>` block in `customers/:customerId.html` or `customers/:customerId/index.html` would have access to the `params` variable which will contain `customerId` in this case. To handle a `POST` request for the specific customer you could use `customers/:customerId/index.post.html` or `customers/:customerId.post.html`.
+If we create a folder structure `customers/[customerId]` we can place an `index.html` in the `customers` folder and another `index.html` in the `[customerId]` folder, or we could have a file called `[customerId].html` in the `customers` folder.
+The `<script server>` block in `customers/[customerId].html` or `customers/[customerId]/index.html` would have access to the `params` variable which will contain `customerId` in this case. To handle a `POST` request for the specific customer you could use `customers/[customerId]/index.post.html` or `customers/[customerId].post.html`.
 
 ## Writing HTML endpoint files
 

@@ -1,16 +1,27 @@
 {
   "name": "htmxx",
-  "version": "3.3.3",
-  "description": "",
+  "version": "3.3.4",
+  "description": "Full but minimalist responsive webapp framework with no client-side Javascript",
   "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stukennedy/htmxx.git"
+  },
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --testTimeout=10000",
     "build": "npx tsc",
     "start": "node lib/index.js",
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q lib/index.js\""
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "htmx",
+    "hyperscript",
+    "mvc",
+    "full-stack",
+    "framework",
+    "node"
+  ],
+  "author": "Stu Kennedy",
   "license": "MIT",
   "dependencies": {
     "body-parser": "^1.20.0",

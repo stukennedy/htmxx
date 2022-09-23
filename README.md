@@ -66,7 +66,7 @@ If we navigate to `/`, the `index.html` will be rendered in the body.
 These files are displayed if an error occurs in the app.
 An `_error.html` in the same directory as the error occured or in a directory above will be rendered in the case of an error.
 
-### paramaterised filenames
+### parameterised filenames
 
 In many routing frameworks you have the ability to define variable path names e.g. `customers/:customerId` so that when a user navigates to `customers/56` the code can retrieve the `customerId` as 56 and load the correct data to display. This framework follows the same principle and it is defined by the folder and file structure.
 If we create a folder structure `customers/:customerId` we can place an `index.html` in the `customers` folder and another `index.html` in the `:customerId` folder, or we could have a file called `:customerId.html` in the `customers` folder.

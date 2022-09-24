@@ -1,13 +1,12 @@
 import { resolve } from 'path';
 import mustache from 'mustache';
 import { readdirSync, readFileSync } from 'fs';
-import type { Request } from 'express';
-import { load } from 'cheerio';
+import { CheerioAPI, load } from 'cheerio';
 import path from 'path';
 
 const re = /(?:\.([^.]+))?$/;
 
-export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'WS';
 
 export type Route = {
   path: string;
@@ -46,6 +45,7 @@ export function getFiles(baseRoute: string, dir: string) {
               route: res
                 .replace(baseRoute, '')
                 .replace('.html', '')
+                .replace('.ws', '')
                 .replace('.post', '')
                 .replace('.get', '')
                 .replace('.put', '')
@@ -95,13 +95,31 @@ const convertRequires = (script: string, filePath: string) => {
     .replace(requireRe, `require('${currentDir}/$1')`);
 };
 
+const getScriptFunction = ($: CheerioAPI, path: string) => {
+  const scriptText = $('script[server]').html() || '';
+  const functionText = `
+    return (async function(req, require, redirect) {
+      const { params, body, query } = req;
+      ${convertRequires(scriptText, path)}
+    })(req, require, redirect)
+  `;
+  $('script[server]').replaceWith('');
+  return new Function('req', 'require', 'redirect', functionText);
+};
+
+type FileRequest = {
+  params: object;
+  body: object;
+  query: object;
+};
 export async function processPath(
-  req: Request,
+  req: FileRequest,
   routes: Route[],
   route: Route,
   doLayout: boolean
 ) {
   const partials: Record<string, string> = {};
+  let ws: string | undefined;
   const files = await Promise.all(
     routes
       .filter(
@@ -113,27 +131,12 @@ export async function processPath(
       .sort((a, b) => a.depth - b.depth)
       .map(async ({ name, path }) => {
         const $ = load(readFileSync(path));
-        const scriptText = $('script[server]').html() || '';
-        const functionText = `
-          return (async function(params, body, query, require, redirect) {
-            ${convertRequires(scriptText, path)}
-          })(params, body, query, require, redirect)
-        `;
-        const script = new Function(
-          'params',
-          'body',
-          'query',
-          'require',
-          'redirect',
-          functionText
-        );
-        $('script[server]').replaceWith('');
+        const wsScript = $('script[server]').attr('ws');
+        const script = getScriptFunction($, path);
         const { html, partials: localPartials } = extractPartials($.html());
         localPartials.forEach(({ id, html }) => (partials[id] = html));
-        const exe = await script(
-          req.params,
-          req.body,
-          req.query,
+        const props = await script(
+          req,
           require,
           (status: number, location: string) => {
             throw new RedirectError(status, location);
@@ -142,15 +145,16 @@ export async function processPath(
         if (!doLayout && name === '_layout.html') {
           return '<slot></slot>';
         } else {
+          ws = wsScript;
           return mustache.render(
             html.replace(/\{\{&gt;/g, '{{>'), // fix cheerio converting template
-            exe,
+            props,
             partials
           );
         }
       })
   );
-  return files.reduce((stacked, layout) => {
+  const markup = files.reduce((stacked, layout) => {
     if (stacked) {
       const $stack = load(stacked);
       if (layout) {
@@ -161,4 +165,5 @@ export async function processPath(
       return layout;
     }
   }, '');
+  return { ws, markup };
 }

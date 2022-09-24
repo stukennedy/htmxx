@@ -1,0 +1,15 @@
+<script server>
+  const dayjs = require('dayjs');
+  const relativeTime = require('dayjs/plugin/relativeTime');
+  dayjs.extend(relativeTime);
+  const { message, username } = body;
+  const tweets = require('~/model/tweets');
+
+  console.log(message);
+
+  const tweet = tweets.add(message, username);
+  tweet.time = dayjs().to(dayjs(tweet.time));
+  return tweet;
+</script>
+
+{{> post-frag}}

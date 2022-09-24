@@ -1,6 +1,6 @@
-import type { Request, Response, Express } from 'express';
+import type { Request, Response } from 'express';
 import express from 'express';
-import ExpressWS from 'express-ws';
+import expressWs, { Application, Instance } from 'express-ws';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import dotenv from 'dotenv';
@@ -8,6 +8,16 @@ import { getFiles, closestErrorFile, processPath } from './router';
 import type { Method, Route } from './router';
 
 dotenv.config();
+const PORT = Number(process.env.PORT || 3000);
+
+const app = express() as unknown as Application;
+const appWs = expressWs(app);
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.set('view engine', 'html');
+app.use(express.static(process.cwd() + '/assets'));
+app.use(compression());
 
 type Redirect = {
   location: string;
@@ -15,7 +25,6 @@ type Redirect = {
 };
 
 const getAppMethod = (
-  app: Express,
   method: Method,
   route: string,
   callback: (req: Request, res: Response) => void
@@ -36,50 +45,61 @@ const getAppMethod = (
 };
 
 const htmxx = async (routesDir: string) => {
-  const app = express();
-  const expressWs = ExpressWS(app);
-  const PORT = process.env.PORT || 3000;
-
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
-  app.set('view engine', 'html');
-  app.use(express.static(process.cwd() + '/assets'));
-  app.use(compression());
-
   const baseRoute = process.cwd() + routesDir;
   const routes: Route[] = getFiles(baseRoute, baseRoute);
   if (!routes || !routes.length) {
     throw new Error(`no valid routes found for path: ${baseRoute}`);
   }
-  routes.map((f) => {
-    if (!f.hidden) {
-      getAppMethod(
-        app,
-        f.method,
-        f.route,
-        async (req: Request, res: Response) => {
-          let output = '';
-          try {
-            output = await processPath(req, routes, f, f.method === 'GET');
-            res.send(output);
-          } catch (error: unknown) {
-            if (error?.hasOwnProperty('location')) {
-              const redirect = error as Redirect;
-              const { location, status } = redirect;
-              res.redirect(status, location);
-              return;
+  routes.forEach((f) => {
+    if (f.hidden) return;
+    if (f.method === 'WS') {
+      app.ws(f.route, (ws, req) => {
+        ws.on('message', async (msg: string) => {
+          req.body = JSON.parse(msg || '{}');
+          const { markup } = await processPath(req, routes, f, false);
+          appWs.getWss().clients.forEach((client) => {
+            if (client.OPEN) {
+              client.send(markup);
             }
-            const errorRoute = closestErrorFile(routes, f.depth);
-            if (errorRoute) {
-              output = await processPath(req, routes, errorRoute, false);
-            } else {
-              output = `<div>ERROR: ${error}</div<`;
-            }
-            res.send(output);
-          }
-        }
-      );
+          });
+        });
+      });
+      return;
     }
+    getAppMethod(f.method, f.route, async (req: Request, res: Response) => {
+      try {
+        const { ws, markup } = await processPath(
+          req,
+          routes,
+          f,
+          f.method === 'GET'
+        );
+        if (ws) {
+          console.log('sending ws');
+
+          appWs.getWss().clients.forEach((client) => {
+            console.log('sending ws');
+            if (client.OPEN) {
+              client.send(markup);
+            }
+          });
+        }
+        res.send(markup);
+      } catch (error: unknown) {
+        if (error?.hasOwnProperty('location')) {
+          const { location, status } = error as Redirect;
+          res.redirect(status, location);
+          return;
+        }
+        const errorRoute = closestErrorFile(routes, f.depth);
+        if (errorRoute) {
+          const { markup } = await processPath(req, routes, errorRoute, false);
+          res.send(markup);
+        } else {
+          res.send(`<div>${error}</div>`);
+        }
+      }
+    });
   });
   return new Promise((resolve) => {
     app.listen(PORT, () => {

@@ -1,0 +1,8 @@
+<script server ws>
+  const model = require('~/model/tweets');
+  const { id } = params;
+  const tweet = model.like(id);
+  return tweet;
+</script>
+
+{{> likes-frag}}

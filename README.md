@@ -117,6 +117,52 @@ e.g.
 </script>
 ```
 
+## Websockets
+
+HTMX allows websocket support, so we have added it to our framework.
+In your HTMX you can connect a form submission to a specific websocket endpoint like this
+
+```html
+<div hx-ws="connect:/tweet">
+  <form hx-ws="send:submit">...</form>
+</div>
+```
+
+To support this we provide an extra file type `*.ws.html`. In our example above we would define a websocket file like this:
+
+```html
+// src/routes/tweet.ws.html
+
+<script server>
+  const { message, username } = body;
+  const tweets = require('~/model/tweets');
+
+  const tweet = tweets.add(message, username);
+  return tweet;
+</script>
+
+{{> post-frag}}
+```
+
+The body attribute contains the data sent by the form submission, so the code here is no different to writing a normal `POST`. The markup that is rendered is now broadcast on the channel instead of returned in an HTTP response, but the HTMX is handled the same way by the form.
+
+Other endpoints can choose to also broadcast their markup response as well as respond with it by adding the `ws` attribute in the `script` tag.
+The following `POST` endpoint generates a retweet fragment and broadcasts it to all clients.
+
+```html
+// src/routes/retweet/[id].post.html
+
+<script server ws>
+  const model = require('~/model/tweets');
+  const { id } = params;
+  return model.retweet(id);
+</script>
+
+{{> retweet-frag}}
+```
+
+See the `examples/twitterClone` folder for the full example.
+
 ## Aliased require paths
 
 When requiring code in your server scripts you can either use relative paths, or the `~` operator will alias to the folder above your routes folder (e.g. your application root).

@@ -74,11 +74,8 @@ const htmxx = async (routesDir: string) => {
           f,
           f.method === 'GET'
         );
-        if (ws) {
-          console.log('sending ws');
-
+        if (ws !== undefined) {
           appWs.getWss().clients.forEach((client) => {
-            console.log('sending ws');
             if (client.OPEN) {
               client.send(markup);
             }

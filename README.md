@@ -158,7 +158,7 @@ The following `POST` endpoint generates a retweet fragment and broadcasts it to 
   return model.retweet(id);
 </script>
 
-{{> retweet-frag}}
+{{> retweets-frag}}
 ```
 
 See the `examples/twitterClone` folder for the full example.

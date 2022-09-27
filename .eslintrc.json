@@ -1,0 +1,23 @@
+{
+  "env": {
+    "browser": false,
+    "amd": true,
+    "es2021": true
+  },
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "overrides": [],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "plugins": ["@typescript-eslint", "html"],
+  "rules": {
+    "@typescript-eslint/no-var-requires": 0
+  },
+  "globals": {
+    "require": "readonly",
+    "params": "readonly",
+    "body": "readonly",
+    "query": "readonly"
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "htmxx",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "description": "Full but minimalist responsive webapp framework with no client-side Javascript",
   "main": "lib/index.js",
   "repository": {
@@ -39,10 +39,14 @@
     "@types/express-ws": "^3.0.1",
     "@types/mustache": "^4.2.1",
     "@types/node": "^18.7.18",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
     "chance": "^1.1.8",
     "concurrently": "^7.4.0",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.5",
+    "eslint": "^8.24.0",
+    "eslint-plugin-html": "^7.1.0",
     "jest": "^29.0.3",
     "nodemon": "^2.0.20",
     "supertest": "^6.2.4",

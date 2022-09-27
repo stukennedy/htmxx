@@ -25,17 +25,27 @@ class RedirectError {
     this.location = location;
   }
 }
+type HtmxxFile = {
+  path: string;
+  route: string;
+  name: string;
+  hidden: boolean;
+  depth: number;
+  method: Method;
+};
+
 export function getFiles(baseRoute: string, dir: string) {
   const dirents = readdirSync(dir, { withFileTypes: true });
   const reMethod = /\.(.+)\.html$/;
-  const files: any[] = dirents
+  const files = dirents
     .map((dirent) => {
       const res = resolve(dir, dirent.name);
       const depth =
         (res.match(/\//g) || []).length - (baseRoute.match(/\//g) || []).length;
       const extension = re.exec(dirent.name)?.[1];
       const hidden = dirent.name?.[0] === '_';
-      const method = reMethod.exec(dirent.name)?.[1].toUpperCase() || 'GET';
+      const method =
+        reMethod.exec(dirent.name)?.[1].toUpperCase() || ('GET' as Method);
       if (dirent.isDirectory()) {
         return getFiles(baseRoute, res);
       } else {
@@ -60,7 +70,7 @@ export function getFiles(baseRoute: string, dir: string) {
           : undefined;
       }
     })
-    .filter((route) => route);
+    .filter((route) => route) as HtmxxFile[];
   return Array.prototype.concat(...files);
 }
 
@@ -74,7 +84,7 @@ export function closestErrorFile(routes: Route[], depth: number) {
 function extractPartials(content: string) {
   const $ = load(content);
   const partials: { id: string; html: string }[] = [];
-  $('script[type="text/html"]').each(function (_, el) {
+  $('script[type="text/html"]').each(function () {
     const id: string | undefined = $(this).attr('id');
     const html: string | null = $(this).html();
     if (id && html) {

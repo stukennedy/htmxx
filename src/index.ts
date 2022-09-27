@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import express from 'express';
-import expressWs, { Application, Instance } from 'express-ws';
+import expressWs, { Application } from 'express-ws';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import dotenv from 'dotenv';
@@ -83,11 +83,13 @@ const htmxx = async (routesDir: string) => {
         }
         res.send(markup);
       } catch (error: unknown) {
+        // eslint-disable-next-line no-prototype-builtins
         if (error?.hasOwnProperty('location')) {
           const { location, status } = error as Redirect;
           res.redirect(status, location);
           return;
         }
+        console.error(error);
         const errorRoute = closestErrorFile(routes, f.depth);
         if (errorRoute) {
           const { markup } = await processPath(req, routes, errorRoute, false);

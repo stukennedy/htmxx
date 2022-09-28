@@ -18,6 +18,7 @@
     "require": "readonly",
     "params": "readonly",
     "body": "readonly",
-    "query": "readonly"
+    "query": "readonly",
+    "redirect": "readonly"
   }
 }

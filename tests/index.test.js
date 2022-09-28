@@ -1,28 +1,22 @@
-const supertest = require('supertest');
-const htmxx = require('../lib/index');
+const { parseFiles, callEndpoint } = require('../lib/index');
 
-let requestWithSupertest;
+let files;
 beforeAll(async () => {
-  const server = await htmxx('/tests/routes');
-  requestWithSupertest = supertest(server);
+  files = parseFiles(process.cwd() + '/tests/routes');
 });
 
 describe('User Endpoints', () => {
   it('GET / should return HTML', async () => {
-    const res = await requestWithSupertest.get('/');
-    expect(res.status).toEqual(200);
-    expect(res.type).toEqual(expect.stringContaining('html'));
-    expect(res.text).toEqual(expect.stringContaining('<h1>My Title</h1>'));
-    expect(res.text).toEqual(expect.stringContaining('<h5>HOME</h5>'));
-    expect(res.text).toEqual(
+    const { markup } = await callEndpoint('/', 'GET', {}, files);
+    expect(markup).toEqual(expect.stringContaining('<h1>My Title</h1>'));
+    expect(markup).toEqual(expect.stringContaining('<h5>HOME</h5>'));
+    expect(markup).toEqual(
       expect.stringContaining('<h3>My Template HOME</h3>')
     );
   });
 
   it('GET /rougue should show Error HTML', async () => {
-    const res = await requestWithSupertest.get('/rogue');
-    expect(res.status).toEqual(200);
-    expect(res.type).toEqual(expect.stringContaining('html'));
-    expect(res.text).toEqual(expect.stringContaining('<h1>My Error</h1>'));
+    const { markup } = await callEndpoint('/rogue', 'GET', {}, files);
+    expect(markup).toEqual(expect.stringContaining('<h1>My Error</h1>'));
   });
 });

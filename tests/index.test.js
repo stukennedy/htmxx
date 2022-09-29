@@ -6,10 +6,11 @@ describe('User Endpoints', () => {
   it('should get all routes', () => {
     const routes = htmxx.getRoutes();
     expect(routes).toEqual([
-      '/dashboard/',
-      '/dashboard/products/:productId',
-      '/dashboard/products/',
-      '/',
+      '/dashboard',
+      '/dashboard/products/[productId]',
+      '/dashboard/products',
+      '/error',
+      '',
       '/redirect',
       '/rogue',
     ]);

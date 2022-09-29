@@ -1,6 +1,6 @@
-import path, { resolve } from 'path';
+import { resolve } from 'path';
 import mustache from 'mustache';
-import { Dirent, readdirSync, readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import { load } from 'cheerio';
 import { HtmxxFile, RedirectError } from './interfaces';
 import type { Method, HtmxxRequest, Output } from './interfaces';
@@ -80,8 +80,7 @@ class Htmxx {
       this.files
         .filter(
           (currRoute) =>
-            (currRoute.name === '_layout.html' &&
-              currRoute.depth <= file.depth) ||
+            (currRoute.name === LAYOUT && currRoute.depth <= file.depth) ||
             currRoute.path === file.path
         )
         .sort((a, b) => a.depth - b.depth)
@@ -95,7 +94,7 @@ class Htmxx {
               throw new RedirectError(status, location);
             }
           );
-          if (file.method !== 'GET' && name === '_layout.html') {
+          if (file.method !== 'GET' && name === LAYOUT) {
             return '<slot></slot>';
           }
           isWs = Boolean(ws);
@@ -121,12 +120,13 @@ class Htmxx {
   }
 
   public async processRoute(route: string, method: Method, req: HtmxxRequest) {
+    const trimmedRoute = route.replace(/\/$/, '');
     const file = this.files.find(
-      (file) => file.routeRe.exec(route) && file.method === method
+      (file) => file.routeRe.exec(trimmedRoute) && file.method === method
     );
     if (!file || file.hidden) {
-      const error = `${method}: route '${route}' not defined`;
-      if (route === '/error') {
+      const error = `${method}: route '${trimmedRoute}' not defined`;
+      if (trimmedRoute === '/error') {
         return { markup: mustache.render('<h3>{{error}}</h3>', { error }) };
       }
       console.error(error);
@@ -137,7 +137,8 @@ class Htmxx {
     }
     let output = {} as Output;
     try {
-      req.params = utils.getParams(route, file);
+      req.params = utils.getParams(trimmedRoute, file);
+      console.log(req.params);
       output = await this.processPath(req, file);
     } catch (error) {
       console.error(error);

@@ -61,7 +61,8 @@ export function getRoute(path: string, baseRoute: string) {
     .replace('.put', '')
     .replace('.delete', '')
     .replace('.patch', '')
-    .replace('index', '');
+    .replace('index', '')
+    .replace(/\/$/, '');
 }
 
 export function getParams(route: string, file: HtmxxFile) {

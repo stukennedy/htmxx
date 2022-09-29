@@ -6,6 +6,7 @@ export type Partial = {
 export type HtmxxFile = {
   path: string;
   route: string;
+  routeRe: RegExp;
   name: string;
   hidden: boolean;
   depth: number;
@@ -29,3 +30,9 @@ export class RedirectError {
     this.location = location;
   }
 }
+
+export type Output = {
+  ws?: boolean;
+  markup?: string;
+  redirect?: RedirectError;
+};

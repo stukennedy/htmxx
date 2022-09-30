@@ -67,7 +67,6 @@ export function getRoute(path: string, baseRoute: string) {
 
 export function getParams(route: string, file: HtmxxFile) {
   const paramArray = file.route.match(/\[.+\]/g);
-  console.log(route, paramArray);
   if (paramArray) {
     const valueArray = file.routeRe.exec(route)?.slice(1);
     return paramArray.reduce((prev, param, i) => {
@@ -82,8 +81,10 @@ export function getParams(route: string, file: HtmxxFile) {
 }
 
 export function buildRouteRegex(route: string) {
-  const text = route.replace(/(\[.+?\])/g, '(.+)');
-  return new RegExp(text);
+  const text = route
+    .replace(/(\[.+?\]\/)/g, '(.+)/')
+    .replace(/(\[.+?\])/g, '(.+)');
+  return new RegExp(`^${text}$`);
 }
 
 export function extractScript($: CheerioAPI, path: string) {

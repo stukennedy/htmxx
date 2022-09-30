@@ -10,12 +10,11 @@ const LAYOUT = '_layout.html';
 
 class Htmxx {
   private routesDirectory: string;
-  private files: HtmxxFile[];
+  public files: HtmxxFile[];
 
   constructor(dir: string) {
     this.routesDirectory = dir;
     this.files = this.parseFiles(dir);
-    console.log(this.files);
   }
 
   public getRoutes() {
@@ -138,7 +137,6 @@ class Htmxx {
     let output = {} as Output;
     try {
       req.params = utils.getParams(trimmedRoute, file);
-      console.log(req.params);
       output = await this.processPath(req, file);
     } catch (error) {
       console.error(error);

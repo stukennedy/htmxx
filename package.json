@@ -1,6 +1,6 @@
 {
   "name": "htmxx",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Full but minimalist responsive webapp framework with no client-side Javascript",
   "main": "lib/index.js",
   "repository": {

@@ -2,11 +2,11 @@ const express = require('express');
 const expressWs = require('express-ws');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
-const { parseFiles, callEndpoint } = require('../../lib/index');
+const Htmxx = require('../../lib/index');
+const htmxx = new Htmxx(process.cwd() + '/routes');
 
 dotenv.config();
 const PORT = Number(process.env.PORT || 3000);
-const files = parseFiles(process.cwd() + '/routes');
 
 const app = express();
 const appWs = expressWs(app);
@@ -33,17 +33,15 @@ const getAppMethod = (method, route, callback) => {
   }
 };
 
-files.forEach((f) => {
+htmxx.files.forEach((f) => {
+  if (f.hidden) return;
   getAppMethod(f.method, f.route, async (req, res) => {
     if (f.method === 'WS') {
       req.on('message', async (msg) => {
         const body = JSON.parse(msg || '{}');
-        const { markup } = await callEndpoint(
-          f.route,
-          f.method,
-          { body },
-          files
-        );
+        const { markup } = await htmxx.processRoute(f.route, f.method, {
+          body,
+        });
         appWs.getWss().clients.forEach((client) => {
           if (client.OPEN) {
             client.send(markup);
@@ -51,27 +49,22 @@ files.forEach((f) => {
         });
       });
     } else {
-      try {
-        const { ws, markup } = await callEndpoint(
-          f.route,
-          f.method,
-          req,
-          files
-        );
-        if (ws !== undefined) {
-          appWs.getWss().clients.forEach((client) => {
-            if (client.OPEN) {
-              client.send(markup);
-            }
-          });
-        }
-        res.send(markup);
-      } catch (error) {
-        // eslint-disable-next-line no-prototype-builtins
-        if (error.hasOwnProperty('location')) {
-          res.redirect(error.status, error.location);
-          return;
-        }
+      const { ws, markup, redirect } = await htmxx.processRoute(
+        req.originalUrl,
+        f.method,
+        req
+      );
+      if (ws !== undefined) {
+        appWs.getWss().clients.forEach((client) => {
+          if (client.OPEN) {
+            client.send(markup);
+          }
+        });
+      }
+      res.send(markup);
+      if (redirect) {
+        res.redirect(redirect.status, redirect.location);
+        return;
       }
     }
   });

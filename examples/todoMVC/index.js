@@ -1,8 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
-const Htmx = require('../../lib/index');
-const htmx = new Htmx(process.cwd() + '/routes');
+const Htmxx = require('../../lib/index');
+const htmxx = new Htmxx(process.cwd() + '/routes');
 
 dotenv.config();
 const PORT = Number(process.env.PORT || 3000);
@@ -18,13 +18,12 @@ app.all('*', async (req, res) => {
     query: req.query,
     body: req.body,
   };
-  const { redirect, markup } = await htmx.processRoute(
+  const { redirect, markup } = await htmxx.processRoute(
     req.params['0'],
     req.method,
     request
   );
   if (redirect) {
-    console.log('redirect', redirect);
     res.redirect(redirect.status, redirect.location);
     return;
   }

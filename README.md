@@ -19,14 +19,15 @@ This resource can then be used by your server (e.g. Lambda function or ExpressJS
 
 ```js
 // src/index.js
-const { parseFiles, callEndpoint } = require('htmxx');
+const Htmxx = require('htmxx');
 
-// genrate the list of all endpoints
-const files = parseFiles('/src/routes');
+// synchronously generate the list of all endpoints
+const htmxx = new Htmxx('/src/routes');
+/* the full list of HtmxxFiles is now in htmxx.files */
 
 // when a route is called with a specific method
 const req = { body, params, query };
-const { ws, markup, redirect } = await callEndpoint(route, method, req, files);
+const { ws, markup, redirect } = await htmxx.processRoute(route, method, req);
 ```
 
 `ws` is an optional boolean to identify whether the response should be sent to a websocket or not.
@@ -44,8 +45,8 @@ e.g.
 
 ## Special files
 
-Any HTML files will be treated as an endpoint. `*.html` is a `GET`, other methods (`POST`, `PUT`, `PATCH`, `DELETE`) are supported in by adding the lowercase prefix to the HTML extension e.g. `*.post.html` is a `POST`.
-Special files `_layout.html` and `_error.html` can be defined anywhere within our routes structure, these don't have endpoints but serve the following purposes:
+Any HTML files will be treated as an endpoint unless they begin with an underscore `_` (e.g. `_layout.html`). `*.html` is a `GET`, other methods (`POST`, `PUT`, `PATCH`, `DELETE`) are supported in by adding the lowercase prefix to the HTML extension e.g. `*.post.html` is a `POST`.
+Special files `_layout.html` and `error.html` can be defined anywhere within our routes structure, these serve the following purposes:
 
 ### Layout files
 

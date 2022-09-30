@@ -18,7 +18,7 @@ export type HtmxxFile = {
 
 export type HtmxxRequest = {
   params: Record<string, string>;
-  query: Record<string, string>;
+  query: Record<string, any>;
   body: Record<string, string | number | undefined>;
 };
 

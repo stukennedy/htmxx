@@ -5,15 +5,14 @@ import { load } from 'cheerio';
 import { HtmxxFile, RedirectError } from './interfaces';
 import type { Method, HtmxxRequest, Output } from './interfaces';
 import * as utils from './utils';
+import server from './server';
 
 const LAYOUT = '_layout.html';
 
-class Htmxx {
-  private routesDirectory: string;
+export class Htmxx {
   public files: HtmxxFile[];
 
   constructor(dir: string) {
-    this.routesDirectory = dir;
     this.files = this.parseFiles(dir);
   }
 
@@ -151,5 +150,8 @@ class Htmxx {
     }
     return output;
   }
+
+  public startServer() {
+    server(this);
+  }
 }
-module.exports = Htmxx;

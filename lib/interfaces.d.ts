@@ -17,7 +17,7 @@ export declare type HtmxxFile = {
 };
 export declare type HtmxxRequest = {
     params: Record<string, string>;
-    query: Record<string, string>;
+    query: Record<string, any>;
     body: Record<string, string | number | undefined>;
 };
 export declare class RedirectError {

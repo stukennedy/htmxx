@@ -17,24 +17,17 @@ npm i htmxx
 Then just point it at a `routes` folder which contains your web-app to generate a resource of all the endpoints.
 This resource can then be used by your server (e.g. Lambda function or ExpressJS) to render the endpoint.
 
-```js
-// src/index.js
-const Htmxx = require('htmxx');
+# How to use
 
-// synchronously generate the list of all endpoints
-const htmxx = new Htmxx('/src/routes');
-/* the full list of HtmxxFiles is now in htmxx.files */
+## Express server
 
-// when a route is called with a specific method
-const req = { body, params, query };
-const { ws, markup, redirect } = await htmxx.processRoute(route, method, req);
+```
+const { Htmxx } = require('htmxx');
+const htmxx = new Htmxx(process.cwd() + '/routes');
+htmxx.startServer();
 ```
 
-`ws` is an optional boolean to identify whether the response should be sent to a websocket or not.
-`markup` is optional HTML text returned and ready to serve to the client.
-`redirect` is an optional Redirect object `{ status: string, location: string }` returned if the endpoint requests a redirect ready for you to redirect in your server.
-
-# Routes folder
+## Routes folder
 
 The web-app just consists of a routes folder containing the application routing structure as `html` files, that define the server endpoints.
 
@@ -237,7 +230,29 @@ And used like this
 
 Any template variables will be rendered in their used context.
 
-## TODO Example
+## Bespoke Server (e.g. serverless)
+
+When using a serverless solution, you will be provided with a function handler that is responding to endpoint requests. In this case express is not a good solution. So you can use the Htmxx `processRoute` method directly without invoking the server. You will need to manage the response in the way your severless platform dictates.
+
+```js
+// src/index.js
+const { Htmxx } = require('htmxx');
+
+// synchronously generate the list of all endpoints
+const htmxx = new Htmxx('/src/routes');
+/* the full list of HtmxxFiles is now in htmxx.files */
+console.log(htmxx.files);
+
+// when a route is called with a specific method
+const req = { body, params, query };
+const { ws, markup, redirect } = await htmxx.processRoute(route, method, req);
+```
+
+`ws` is an optional boolean to identify whether the response should be sent to a websocket or not.
+`markup` is optional HTML text returned and ready to serve to the client.
+`redirect` is an optional Redirect object `{ status: string, location: string }` returned if the endpoint requests a redirect ready for you to redirect in your server.
+
+## TODO & Twitter Example
 
 See the `example` folder for a TodoMVC and Twitter Clone implementation in HTMXX running on ExpressJS.
 

@@ -44,6 +44,7 @@ export default function (htmxx: Htmxx) {
             body: JSON.parse(msg || '{}'),
             params: {},
             query: {},
+            headers: {},
           };
           const { markup } = await htmxx.processRoute(
             f.route,
@@ -69,11 +70,11 @@ export default function (htmxx: Htmxx) {
             }
           });
         }
-        res.send(markup);
         if (redirect) {
           res.redirect(redirect.status, redirect.location);
           return;
         }
+        res.send(markup);
       }
     });
   });

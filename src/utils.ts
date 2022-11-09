@@ -91,7 +91,7 @@ export function extractScript($: CheerioAPI, path: string) {
   const scriptText = $('script[server]').html() || '';
   return `
     return (async function(req, require, redirect) {
-      const { params, body, query } = req;
+      const { params, body, query, headers } = req;
       ${convertRequires(scriptText, path)}
     })(req, require, redirect)
   `;

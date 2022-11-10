@@ -15,8 +15,9 @@ export type HtmxxFile = {
 
 export type HtmxxRequest = {
   params: Record<string, string>;
-  query: Record<string, any>;
+  query: Record<string, string>;
   body: Record<string, string | number | undefined>;
+  headers: Record<string, string>;
   redirect: (status: number, location: string) => void;
   broadcast: (markup: string) => void;
 };

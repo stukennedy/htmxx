@@ -2,7 +2,8 @@ import express, { Request, Response } from 'express';
 import expressWs, { Application } from 'express-ws';
 import bodyParser from 'body-parser';
 import type { Htmxx } from './';
-import type { Method, RedirectError } from './interfaces';
+import { RedirectError } from './interfaces';
+import type { Method } from './interfaces';
 
 export default function (htmxx: Htmxx, port?: number) {
   const PORT = Number(port || 3000);
@@ -33,30 +34,39 @@ export default function (htmxx: Htmxx, port?: number) {
     }
   };
 
+  const broadcast = (markup: string) => {
+    appWs.getWss().clients.forEach((client) => {
+      if (client.OPEN) {
+        client.send(markup);
+      }
+    });
+  };
+
   htmxx.files.forEach((f) => {
     if (f.hidden) return;
     getAppMethod(f.method, f.route, async (req: Request, res: Response) => {
+      const request = {
+        body: {},
+        params: {},
+        query: {},
+        headers: {},
+        redirect: (status: number, location: string) => {
+          throw new RedirectError(status, location);
+        },
+        broadcast,
+      };
       if (f.method === 'WS') {
         req.on('message', async (msg) => {
-          const request = {
-            body: JSON.parse(msg || '{}'),
-            params: {},
-            query: {},
-            headers: {},
-          };
+          request.body = JSON.parse(msg || '{}');
           const markup = await htmxx.processRoute(f.route, f.method, request);
-          appWs.getWss().clients.forEach((client) => {
-            if (client.OPEN) {
-              client.send(markup);
-            }
-          });
+          broadcast(markup);
         });
       } else {
         try {
           const markup = await htmxx.processRoute(
             req.originalUrl.replace(/\?.+$/, ''),
             f.method,
-            req
+            { ...request, ...req }
           );
           res.send(markup);
         } catch (error) {

@@ -11,4 +11,3 @@ export declare class Htmxx {
     processRoute(route: string, method: Method, req: HtmxxRequest): Promise<string>;
     startServer(): void;
 }
-export declare const redirect: (status: number, location: string) => never;

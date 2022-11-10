@@ -117,7 +117,3 @@ export class Htmxx {
     server(this);
   }
 }
-
-export const redirect = (status: number, location: string) => {
-  throw new RedirectError(status, location);
-};

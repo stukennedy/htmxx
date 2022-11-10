@@ -16,6 +16,8 @@ export declare type HtmxxRequest = {
     params: Record<string, string>;
     query: Record<string, any>;
     body: Record<string, string | number | undefined>;
+    redirect: (status: number, location: string) => void;
+    broadcast: (markup: string) => void;
 };
 export declare class RedirectError {
     status: number;

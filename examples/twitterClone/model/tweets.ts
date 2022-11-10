@@ -1,13 +1,23 @@
-const { v4: uuid } = require('uuid');
+import { v4 as uuid } from 'uuid';
+
+export type Tweet = {
+  id: string;
+  message: string;
+  username: string;
+  retweets: number;
+  likes: number;
+  time: string;
+  avatar: string;
+};
 
 class Tweets {
-  tweets = [];
+  tweets: Tweet[] = [];
 
   constructor() {
     this.tweets = [];
   }
 
-  add(message, username) {
+  add(message: string, username: string) {
     const tweet = {
       id: uuid(),
       message,
@@ -23,19 +33,19 @@ class Tweets {
     return tweet;
   }
 
-  like(id) {
+  like(id: string) {
     const idx = this.tweets.findIndex((t) => t.id === id);
     this.tweets[idx].likes += 1;
     return this.tweets[idx];
   }
 
-  retweet(id) {
+  retweet(id: string) {
     const idx = this.tweets.findIndex((t) => t.id === id);
     this.tweets[idx].retweets += 1;
     return this.tweets[idx];
   }
 
-  delete(id) {
+  delete(id: string) {
     const idx = this.tweets.findIndex((t) => t.id === id);
     this.tweets.splice(idx, 1);
     return;
@@ -45,9 +55,9 @@ class Tweets {
     return this.tweets;
   }
 
-  get(id) {
+  get(id: string) {
     const tweet = this.tweets.find((t) => t.id === id);
     return tweet;
   }
 }
-module.exports = new Tweets();
+export default new Tweets();

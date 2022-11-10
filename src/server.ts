@@ -1,13 +1,11 @@
 import express, { Request, Response } from 'express';
 import expressWs, { Application } from 'express-ws';
 import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
 import type { Htmxx } from './';
-import { Method } from './interfaces';
+import type { Method, RedirectError } from './interfaces';
 
-export default function (htmxx: Htmxx) {
-  dotenv.config();
-  const PORT = Number(process.env.PORT || 3000);
+export default function (htmxx: Htmxx, port?: number) {
+  const PORT = Number(port || 3000);
 
   const app = express() as unknown as Application;
   const appWs = expressWs(app);
@@ -15,7 +13,7 @@ export default function (htmxx: Htmxx) {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.set('view engine', 'html');
-  app.use(express.static(process.cwd() + '/assets'));
+  app.use(express.static(htmxx.dir + '/assets'));
 
   const getAppMethod = (method: Method, route: string, callback: any) => {
     const paramRoute = route.replace(/\[(.+)\]/g, ':$1');
@@ -46,11 +44,7 @@ export default function (htmxx: Htmxx) {
             query: {},
             headers: {},
           };
-          const { markup } = await htmxx.processRoute(
-            f.route,
-            f.method,
-            request
-          );
+          const markup = await htmxx.processRoute(f.route, f.method, request);
           appWs.getWss().clients.forEach((client) => {
             if (client.OPEN) {
               client.send(markup);
@@ -58,23 +52,21 @@ export default function (htmxx: Htmxx) {
           });
         });
       } else {
-        const { ws, markup, redirect } = await htmxx.processRoute(
-          req.originalUrl.replace(/\?.+$/, ''),
-          f.method,
-          req
-        );
-        if (ws !== undefined) {
-          appWs.getWss().clients.forEach((client) => {
-            if (client.OPEN) {
-              client.send(markup);
-            }
-          });
+        try {
+          const markup = await htmxx.processRoute(
+            req.originalUrl.replace(/\?.+$/, ''),
+            f.method,
+            req
+          );
+          res.send(markup);
+        } catch (error) {
+          // eslint-disable-next-line no-prototype-builtins
+          if (error?.hasOwnProperty('location')) {
+            const redirect = error as RedirectError;
+            res.redirect(redirect.status, redirect.location);
+            return;
+          }
         }
-        if (redirect) {
-          res.redirect(redirect.status, redirect.location);
-          return;
-        }
-        res.send(markup);
       }
     });
   });

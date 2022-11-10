@@ -11,9 +11,6 @@ export type HtmxxFile = {
   hidden: boolean;
   depth: number;
   method: Method;
-  script: string;
-  partials: Partial[];
-  ws?: string;
 };
 
 export type HtmxxRequest = {
@@ -36,3 +33,8 @@ export type Output = {
   markup?: string;
   redirect?: RedirectError;
 };
+
+export type HtmxxFunction = (
+  req: HtmxxRequest,
+  children: string
+) => Promise<string>;

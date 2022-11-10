@@ -11,9 +11,6 @@ export declare type HtmxxFile = {
     hidden: boolean;
     depth: number;
     method: Method;
-    script: string;
-    partials: Partial[];
-    ws?: string;
 };
 export declare type HtmxxRequest = {
     params: Record<string, string>;
@@ -30,3 +27,4 @@ export declare type Output = {
     markup?: string;
     redirect?: RedirectError;
 };
+export declare type HtmxxFunction = (req: HtmxxRequest, children: string) => Promise<string>;

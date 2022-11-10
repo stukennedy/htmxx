@@ -1,15 +1,10 @@
-import { CheerioAPI } from 'cheerio';
-import type { Partial, HtmxxFile } from './interfaces';
+import type { HtmxxFile } from './interfaces';
 export declare function isHTML(filename: string): boolean;
 export declare function getMethod(filename: string): string;
 export declare function isHidden(filename: string): boolean;
 export declare function getEndpoint(filename: string): string | undefined;
 export declare function isVariable(filename: string): RegExpExecArray | null;
-export declare function convertRequires(script: string, filePath: string): string;
 export declare function closestErrorFile(routes: HtmxxFile[], depth: number): HtmxxFile | undefined;
-export declare function extractPartials($: CheerioAPI): Partial[];
 export declare function getRoute(path: string, baseRoute: string): string;
 export declare function getParams(route: string, file: HtmxxFile): Record<string, string>;
 export declare function buildRouteRegex(route: string): RegExp;
-export declare function extractScript($: CheerioAPI, path: string): string;
-export declare function createFunction(script: string): Function;

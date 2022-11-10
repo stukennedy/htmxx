@@ -11,14 +11,14 @@ export declare type HtmxxFile = {
     hidden: boolean;
     depth: number;
     method: Method;
-    script: string;
-    partials: Partial[];
-    ws?: string;
 };
 export declare type HtmxxRequest = {
     params: Record<string, string>;
-    query: Record<string, any>;
+    query: Record<string, string>;
     body: Record<string, string | number | undefined>;
+    headers: Record<string, string>;
+    redirect: (status: number, location: string) => void;
+    broadcast: (markup: string) => void;
 };
 export declare class RedirectError {
     status: number;
@@ -30,3 +30,4 @@ export declare type Output = {
     markup?: string;
     redirect?: RedirectError;
 };
+export declare type HtmxxFunction = (req: HtmxxRequest, children: string) => Promise<string>;

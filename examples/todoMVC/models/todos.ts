@@ -1,7 +1,13 @@
-const { v4: uuid } = require('uuid');
+import { v4 as uuid } from 'uuid';
+
+export type Todo = {
+  id: string;
+  name: string;
+  done: boolean;
+};
 
 class Todos {
-  todos = [];
+  todos: Todo[] = [];
 
   constructor() {
     this.todos = [
@@ -18,7 +24,7 @@ class Todos {
     ];
   }
 
-  addTodo(name) {
+  addTodo(name: string) {
     const todo = {
       id: uuid(),
       name,
@@ -28,19 +34,19 @@ class Todos {
     return todo;
   }
 
-  toggleTodo(id) {
+  toggleTodo(id: string) {
     const idx = this.todos.findIndex((t) => t.id === id);
     this.todos[idx].done = !this.todos[idx].done;
     return this.todos[idx];
   }
 
-  deleteTodo(id) {
+  deleteTodo(id: string) {
     const idx = this.todos.findIndex((t) => t.id === id);
     this.todos.splice(idx, 1);
     return;
   }
 
-  renameTodo(id, name) {
+  renameTodo(id: string, name: string) {
     const idx = this.todos.findIndex((t) => t.id === id);
     this.todos[idx].name = name;
     return this.todos[idx];
@@ -50,7 +56,7 @@ class Todos {
     return this.todos;
   }
 
-  getTodo(id) {
+  getTodo(id: string) {
     const todo = this.todos.find((t) => t.id === id);
     return todo;
   }
@@ -65,4 +71,4 @@ class Todos {
     return this.todos;
   }
 }
-module.exports = new Todos();
+export default new Todos();

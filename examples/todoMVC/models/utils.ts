@@ -1,4 +1,6 @@
-exports.filterTodos = (filter, todos) => {
+import { Todo } from './todos';
+
+export const filterTodos = (filter: string, todos: Todo[]) => {
   switch (filter) {
     case 'all':
       return todos;

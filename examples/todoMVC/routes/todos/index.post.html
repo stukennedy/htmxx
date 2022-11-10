@@ -1,8 +1,0 @@
-<script server>
-  const model = require('~/models/todos');
-  const todo = model.addTodo(body.todo);
-  const itemsLeft = model.getItemsLeft();
-  return { ...todo, itemsLeft };
-</script>
-
-{{> todo-item-frag}} {{> todo-count-frag}}

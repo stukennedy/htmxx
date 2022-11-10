@@ -1,7 +1,0 @@
-<script server ws>
-  const model = require('~/model/tweets');
-  const { id } = params;
-  return model.retweet(id);
-</script>
-
-{{> retweets-frag}}

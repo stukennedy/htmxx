@@ -1,9 +1,0 @@
-<script server>
-  const model = require('~/models/todos');
-  const { filterTodos } = require('~/models/utils');
-  const todos = filterTodos(query.filter, model.clearCompleted());
-  const itemsLeft = model.getItemsLeft();
-  return { todos, itemsLeft };
-</script>
-
-{{> todo-list-frag}} {{> todo-count-frag}}

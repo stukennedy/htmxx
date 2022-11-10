@@ -1,13 +1,12 @@
-import express, { Request, Response } from 'express';
+import express, { Request, RequestHandler, Response } from 'express';
 import expressWs, { Application } from 'express-ws';
 import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
 import type { Htmxx } from './';
-import { Method } from './interfaces';
+import { HtmxxRequest, RedirectError } from './interfaces';
+import type { Method } from './interfaces';
 
-export default function (htmxx: Htmxx) {
-  dotenv.config();
-  const PORT = Number(process.env.PORT || 3000);
+export default function (htmxx: Htmxx, port?: number) {
+  const PORT = Number(port || 3000);
 
   const app = express() as unknown as Application;
   const appWs = expressWs(app);
@@ -15,9 +14,13 @@ export default function (htmxx: Htmxx) {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.set('view engine', 'html');
-  app.use(express.static(process.cwd() + '/assets'));
+  app.use(express.static(htmxx.dir + '/assets'));
 
-  const getAppMethod = (method: Method, route: string, callback: any) => {
+  const getAppMethod = (
+    method: Method,
+    route: string,
+    callback: RequestHandler
+  ) => {
     const paramRoute = route.replace(/\[(.+)\]/g, ':$1');
     switch (method) {
       case 'DELETE':
@@ -28,55 +31,60 @@ export default function (htmxx: Htmxx) {
         return app.post(paramRoute, callback);
       case 'PATCH':
         return app.patch(paramRoute, callback);
-      case 'WS':
-        return app.ws(paramRoute, callback);
       default:
         return app.get(paramRoute, callback);
     }
   };
 
+  const broadcast = (markup: string) =>
+    appWs
+      .getWss()
+      .clients.forEach((client) => client.OPEN && client.send(markup));
+
   htmxx.files.forEach((f) => {
     if (f.hidden) return;
-    getAppMethod(f.method, f.route, async (req: Request, res: Response) => {
-      if (f.method === 'WS') {
+    const request: HtmxxRequest = {
+      body: {},
+      params: {},
+      query: {},
+      headers: {},
+      redirect: (status: number, location: string) => {
+        throw new RedirectError(status, location);
+      },
+      broadcast,
+    };
+    if (f.method === 'WS') {
+      const paramRoute = f.route.replace(/\[(.+)\]/g, ':$1');
+      app.ws(paramRoute, (req) => {
         req.on('message', async (msg) => {
-          const request = {
-            body: JSON.parse(msg || '{}'),
-            params: {},
-            query: {},
-            headers: {},
-          };
-          const { markup } = await htmxx.processRoute(
-            f.route,
+          request.body = JSON.parse(String(msg) || '{}');
+          const markup = await htmxx.processRoute(f.route, f.method, request);
+          broadcast(markup);
+        });
+      });
+    } else {
+      getAppMethod(f.method, f.route, async (req: Request, res: Response) => {
+        try {
+          request.body = req.body;
+          request.params = req.params;
+          request.query = req.query as Record<string, string>;
+          request.headers = req.headers as Record<string, string>;
+          const markup = await htmxx.processRoute(
+            req.originalUrl.replace(/\?.+$/, ''),
             f.method,
             request
           );
-          appWs.getWss().clients.forEach((client) => {
-            if (client.OPEN) {
-              client.send(markup);
-            }
-          });
-        });
-      } else {
-        const { ws, markup, redirect } = await htmxx.processRoute(
-          req.originalUrl.replace(/\?.+$/, ''),
-          f.method,
-          req
-        );
-        if (ws !== undefined) {
-          appWs.getWss().clients.forEach((client) => {
-            if (client.OPEN) {
-              client.send(markup);
-            }
-          });
+          res.send(markup);
+        } catch (error) {
+          // eslint-disable-next-line no-prototype-builtins
+          if (error?.hasOwnProperty('location')) {
+            const redirect = error as RedirectError;
+            res.redirect(redirect.status, redirect.location);
+            return;
+          }
         }
-        if (redirect) {
-          res.redirect(redirect.status, redirect.location);
-          return;
-        }
-        res.send(markup);
-      }
-    });
+      });
+    }
   });
 
   app.listen(PORT, () => {

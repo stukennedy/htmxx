@@ -67,7 +67,7 @@ export default (request: HtmxxRequest, children: string) => {
       </head>
     </head>
     <body>
-      <slot></slot>
+      ${children}
     </body>
     </html>
 `;
@@ -106,9 +106,7 @@ export default async (request: HtmxxRequest) => {
 
   return /*html*/ `
     <ul id="list">
-      {{#customers}}
-      <li>{{name}}</li>
-      {{/customers}}
+      ${customers.map(({ name }) => `<li>${name}</li>`)}
     </ul>
     <div>
       <input type="text" name="customerName" />

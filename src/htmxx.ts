@@ -14,7 +14,6 @@ export class Htmxx {
   constructor(dir: string) {
     this.dir = dir;
     this.files = this.parseFiles(dir + '/routes');
-    console.log(this.getRoutes());
   }
 
   public getRoutes() {
@@ -76,10 +75,11 @@ export class Htmxx {
     }
     let fn: HtmxxFunction = require(route.path).default;
     let markup = await fn(req, '');
-    for (const stack of stacks) {
-      console.log({ stack });
-      fn = require(stack.path).default;
-      markup = await fn(req, markup);
+    if (route.method === 'GET') {
+      for (const stack of stacks) {
+        fn = require(stack.path).default;
+        markup = await fn(req, markup);
+      }
     }
     return markup;
   }

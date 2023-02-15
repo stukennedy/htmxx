@@ -54,7 +54,7 @@ export default function (htmxx: Htmxx, port?: number) {
       broadcast,
     };
     if (f.method === 'WS') {
-      const paramRoute = f.route.replace(/\[(.+)\]/g, ':$1');
+      const paramRoute = f.route.replace(/\[(.+?)\]/g, ':$1');
       app.ws(paramRoute, (req) => {
         req.on('message', async (msg) => {
           request.body = JSON.parse(String(msg) || '{}');

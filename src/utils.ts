@@ -42,7 +42,7 @@ export function getRoute(path: string, baseRoute: string) {
 }
 
 export function getParams(route: string, file: HtmxxFile) {
-  const paramArray = file.route.match(/\[.+\]/g);
+  const paramArray = file.route.match(/\[.+?\]/g);
   if (paramArray) {
     const valueArray = file.routeRe.exec(route)?.slice(1);
     return paramArray.reduce((prev, param, i) => {

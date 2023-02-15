@@ -21,7 +21,7 @@ export default function (htmxx: Htmxx, port?: number) {
     route: string,
     callback: RequestHandler
   ) => {
-    const paramRoute = route.replace(/\[(.+)\]/g, ':$1');
+    const paramRoute = route.replace(/\[(.+?)\]/g, ':$1');
     switch (method) {
       case 'DELETE':
         return app.delete(paramRoute, callback);
